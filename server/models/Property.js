@@ -22,11 +22,7 @@ const propertySchema = new mongoose.Schema({
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative']
   },
-  currency: {
-    type: String,
-    enum: ['ETB', 'USD'],
-    default: 'ETB'
-  },
+   
   size: {
     value: { type: Number, required: true, min: [1, 'Size must be positive'] },
     unit: { type: String, enum: ['sqm', 'sqft'], default: 'sqm' }
@@ -87,13 +83,10 @@ const propertySchema = new mongoose.Schema({
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Owner',
+    ref: 'User',
     required: [true, 'Property owner is required']
   },
-  agent: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
+   
   status: {
     type: String,
     enum: ['available', 'sold', 'rented', 'pending', 'maintenance'],
@@ -107,11 +100,7 @@ const propertySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  isPromoted: {
-    type: Boolean,
-    default: false
-  },
-  promotionExpiry: Date,
+   
   rentalTerms: {
     minRentalPeriod: { type: Number, min: 1 }, // in months
     maxRentalPeriod: { type: Number, min: 1 }, // in months
@@ -129,8 +118,7 @@ const propertySchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+   
 });
 
 // Indexes

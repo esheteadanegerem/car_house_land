@@ -3,18 +3,13 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
-  firstName: {
+  fullName: {
     type: String,
-    required: [true, 'First name is required'],
+    required: [true, 'Full name is required'],
     trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    maxlength: [80, 'First name cannot exceed 50 characters']
   },
-  lastName: {
-    type: String,
-    required: [true, 'Last name is required'],
-    trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
-  },
+  
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -69,7 +64,7 @@ const userSchema = new mongoose.Schema({
   verificationCode: String,
   verificationCodeExpire: Date,
   resetCode: String,
-resetCodeExpire: Date,
+  resetCodeExpire: Date,
   lastLogin: Date
 }, {
   timestamps: true
@@ -81,11 +76,7 @@ userSchema.index({ phone: 1 });
 userSchema.index({ role: 1, isActive: 1 });
 userSchema.index({ createdAt: -1 });
 userSchema.index({ updatedAt: -1 });
-
-// Virtuals
-userSchema.virtual('fullName').get(function () {
-  return `${this.firstName} ${this.lastName}`;
-});
+ 
 
 // Middleware
 userSchema.pre('save', async function (next) {

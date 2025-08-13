@@ -1,72 +1,57 @@
- const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const dealSchema = new mongoose.Schema(
   {
-    dealId: { type: String, unique: true, required: true },
-    chat: { type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }, // link to the conversation
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: [true, 'User is required'] },
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Owner', required: [true, 'Owner is required'] },
-    item: { type: mongoose.Schema.Types.ObjectId, required: [true, 'Item is required'], refPath: 'itemType' },
-    itemType: { type: String, required: [true, 'Item type is required'], enum: ['Car', 'Property', 'Land', 'Machine'] },
-    dealType: { type: String, enum: ['sale', 'rent'], required: [true, 'Deal type is required'] },
+    dealId: {
+      type: String,
+      unique: true,
+      required: true,
+    },
 
-    // Admin-driven workflow
+    // Buyer and Seller
+    buyer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Buyer is required'],
+    },
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Seller is required'],
+    },
+
+    // Item being sold or rented
+    item: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: [true, 'Item is required'],
+      refPath: 'itemType', // dynamic reference
+    },
+    itemType: {
+      type: String,
+      required: [true, 'Item type is required'],
+      enum: ['Car', 'Property', 'Land', 'Machine'],
+    },
+
+    // Deal Type and Status
+    dealType: {
+      type: String,
+      enum: ['sale', 'rent'],
+      required: [true, 'Deal type is required'],
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected', 'cancelled', 'completed'],
       default: 'pending',
     },
 
-    originalPrice: { type: Number, required: [true, 'Original price is required'] },
-    finalPrice: { type: Number, default: null },
-    currency: { type: String, enum: ['ETB', 'USD'], default: 'ETB' },
-
-    negotiationHistory: [
-      {
-        actor: { type: String, enum: ['user', 'owner', 'admin'], required: true },
-        action: {
-          type: String,
-          enum: ['note', 'price_proposal', 'admin_approved', 'admin_rejected', 'cancelled', 'completed'],
-          required: true,
-        },
-        amount: Number,
-        message: String,
-        timestamp: { type: Date, default: Date.now },
-      },
-    ],
-
-    rentalDetails: {
-      startDate: Date,
-      endDate: Date,
-      duration: Number, // days or months externally agreed
-      securityDeposit: Number,
-      monthlyPayment: Number,
-    },
-
-    // Payment is outside the system, these fields are optional for bookkeeping/reference only
-    paymentDetails: {
-      method: { type: String, enum: ['cash', 'bank_transfer', 'mobile_money', 'installment', 'other'], default: 'other' },
-      externalReference: String, // e.g., receipt number
-      paidAmount: { type: Number, default: 0 },
-      remainingAmount: { type: Number, default: 0 },
-    },
-
-    documents: [
-      {
-        name: { type: String, required: true },
-        url: { type: String, required: true },
-        uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        uploadedAt: { type: Date, default: Date.now },
-      },
-    ],
-
     completedAt: Date,
     cancelledAt: Date,
     cancellationReason: String,
 
+    // Ratings from both sides
     rating: {
-      userRating: { score: { type: Number, min: 1, max: 5 }, comment: String },
-      ownerRating: { score: { type: Number, min: 1, max: 5 }, comment: String },
+      buyerRating: { score: { type: Number, min: 1, max: 5 }, comment: String },
+      sellerRating: { score: { type: Number, min: 1, max: 5 }, comment: String },
     },
   },
   {
@@ -78,12 +63,12 @@ const dealSchema = new mongoose.Schema(
 
 // Indexes
 dealSchema.index({ dealId: 1 });
-dealSchema.index({ user: 1, status: 1 });
-dealSchema.index({ owner: 1, status: 1 });
+dealSchema.index({ buyer: 1, status: 1 });
+dealSchema.index({ seller: 1, status: 1 });
 dealSchema.index({ item: 1, itemType: 1 });
 dealSchema.index({ status: 1, createdAt: -1 });
 
-// Pre-save middleware to generate dealId
+// Auto-generate dealId before saving
 dealSchema.pre('save', function (next) {
   if (!this.dealId) {
     const timestamp = Date.now().toString(36);

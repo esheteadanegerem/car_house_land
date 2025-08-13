@@ -38,11 +38,7 @@ const carSchema = new mongoose.Schema({
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative']
   },
-  currency: {
-    type: String,
-    enum: ['ETB', 'USD'],
-    default: 'ETB'
-  },
+  
   mileage: {
     type: Number,
     min: [0, 'Mileage cannot be negative']
@@ -57,10 +53,7 @@ const carSchema = new mongoose.Schema({
     enum: ['manual', 'automatic'],
     required: [true, 'Transmission type is required']
   },
-  engineSize: {
-    type: String,
-    trim: true
-  },
+  
   color: {
     type: String,
     required: [true, 'Car color is required'],
@@ -96,7 +89,7 @@ const carSchema = new mongoose.Schema({
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Owner',
+    ref: 'User',
     required: [true, 'Car owner is required']
   },
   status: {
@@ -112,10 +105,7 @@ const carSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  isPromoted: {
-    type: Boolean,
-    default: false
-  },
+  
   
 }, {
   timestamps: true,

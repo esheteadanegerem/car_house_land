@@ -12,11 +12,7 @@ const landSchema = new mongoose.Schema({
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative']
   },
-  currency: {
-    type: String,
-    enum: ['ETB', 'USD'],
-    default: 'ETB'
-  },
+   
   size: {
     value: { type: Number, required: true, min: [0.1, 'Size must be positive'] },
     unit: { type: String, enum: ['hectare', 'acre', 'sqm'], default: 'hectare' }
@@ -36,11 +32,7 @@ const landSchema = new mongoose.Schema({
     enum: ['flat', 'hilly', 'mountainous', 'rolling', 'desert', 'sloped'],
     required: [true, 'Topography is required']
   },
-  soilType: {
-    type: String,
-    enum: ['clay', 'sandy', 'loamy', 'rocky', 'volcanic', 'fertile'],
-    required: [true, 'Soil type is required']
-  },
+ 
   waterAccess: {
     type: String,
     enum: ['none', 'well', 'river', 'lake', 'municipal', 'borehole'],
@@ -62,14 +54,7 @@ const landSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  mineralRights: {
-    type: Boolean,
-    default: false
-  },
-  environmentalRestrictions: [{
-    type: String,
-    trim: true
-  }],
+   
   description: {
     type: String,
     required: [true, 'Description is required'],
@@ -93,13 +78,10 @@ const landSchema = new mongoose.Schema({
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Owner',
+    ref: 'User',
     required: [true, 'Land owner is required']
   },
-  agent: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
+  
   status: {
     type: String,
     enum: ['available', 'sold', 'pending', 'reserved'],
@@ -113,15 +95,7 @@ const landSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  isPromoted: {
-    type: Boolean,
-    default: false
-  },
-  promotionExpiry: Date,
-  developmentPotential: {
-    type: String,
-    maxlength: [500, 'Development potential cannot exceed 500 characters']
-  },
+    
   nearbyAmenities: [{
     name: { type: String, required: true },
     distance: { type: Number, required: true }, // in km
@@ -129,8 +103,7 @@ const landSchema = new mongoose.Schema({
   }]
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  
 });
 
 // Indexes

@@ -1,8 +1,7 @@
 const { body, param } = require('express-validator');
 
 const registerValidation = [
-  body('firstName').trim().isLength({ min: 2, max: 50 }).matches(/^[a-zA-Z\s]+$/),
-  body('lastName').trim().isLength({ min: 2, max: 50 }).matches(/^[a-zA-Z\s]+$/),
+  body('fullName').trim().isLength({ min: 2, max: 50 }).matches(/^[a-zA-Z\s]+$/),
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
   body('phone').matches(/^\+251[0-9]{9}$/),

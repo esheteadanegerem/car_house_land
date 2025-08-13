@@ -2,13 +2,13 @@ const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
   const port = Number(process.env.SMTP_PORT || 587);
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port,
     secure: port === 465,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      user: "tommr2323@gmail.com",
+      pass: "ihes tjso xeff afdz"
     },
     tls: {
       rejectUnauthorized: false
@@ -21,11 +21,11 @@ const sendEmail = async (options) => {
     const transporter = createTransporter();
     
     const mailOptions = {
-      from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
+      from: "noreply@propertyauto.et",
       to: options.email,
       subject: options.subject,
       html: options.html,
-      text: options.text
+      text: options.text || options.html.replace(/<[^>]*>/g, '')
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -36,6 +36,26 @@ const sendEmail = async (options) => {
     throw new Error('Email could not be sent');
   }
 };
+
+const wrapEmail = (title, content) => `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fdf9f4; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: #2563eb; margin: 0;">WisdomWalk</h1>
+      <p style="color: #666; margin: 5px 0;">Community of Wisdom</p>
+    </div>
+    <h2 style="color: #A67B5B; font-size: 26px; text-align: center;">${title}</h2>
+    <div style="font-size: 16px; color: #555; line-height: 1.6;">
+      ${content}
+    </div>
+    <hr style="border: none; border-top: 1px solid #e8ddd3; margin: 30px 0;" />
+    <div style="font-size: 14px; color: #666; text-align: center;">
+      <p>"She is clothed with strength and dignity, and she laughs without fear of the future."<br><strong>– Proverbs 31:25</strong></p>
+      <p>Blessings,<br><strong>The WisdomWalk Team</strong></p>
+      <p>Need help? Contact us at <a href="mailto:support@wisdomwalk.com">support@wisdomwalk.com</a></p>
+      <p>© ${new Date().getFullYear()} WisdomWalk. All rights reserved.</p>
+    </div>
+  </div>
+`;
 
 const emailTemplates = {
   welcome: (name) => ({
@@ -73,132 +93,112 @@ const emailTemplates = {
         
         <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
           <p>Need help? Contact us at <a href="mailto:support@propertyauto.et">support@propertyauto.et</a></p>
-          <p>© 2024 PropertyAuto Ethiopia. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} PropertyAuto Ethiopia. All rights reserved.</p>
         </div>
       </div>
     `
   }),
 
-  dealNotification: (dealData) => ({
-    subject: `Deal Update - ${dealData.itemTitle}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #2563eb; margin: 0;">PropertyAuto</h1>
-        </div>
-        
-        <h2 style="color: #333;">Deal Update</h2>
-        
-        <p style="color: #555; line-height: 1.6;">
-          There's an update on your deal for <strong>${dealData.itemTitle}</strong>
-        </p>
-        
-        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 8px 0; color: #666; font-weight: bold;">Deal ID:</td>
-              <td style="padding: 8px 0; color: #333;">${dealData.dealId}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #666; font-weight: bold;">Status:</td>
-              <td style="padding: 8px 0; color: #333; text-transform: capitalize;">${dealData.status}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #666; font-weight: bold;">Price:</td>
-              <td style="padding: 8px 0; color: #333;">${dealData.price} ${dealData.currency}</td>
-            </tr>
-          </table>
-        </div>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.CLIENT_URL}/deals/${dealData.dealId}" 
-             style="background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            View Deal Details
-          </a>
-        </div>
-        
-        <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
-          <p>© 2024 PropertyAuto Ethiopia. All rights reserved.</p>
-        </div>
+  verificationCode: (name, code) => ({
+    subject: '🌸 Verify Your Email - WisdomWalk',
+    html: wrapEmail('Email Verification', `
+      <p>Hi ${name},</p>
+      <p>Please verify your email by using the following code:</p>
+      <div style="font-size: 32px; font-weight: bold; color: #A67B5B; letter-spacing: 8px; text-align: center; margin: 30px 0;">
+        ${code}
       </div>
-    `
+      <p style="color: #666; font-size: 14px;">This code will expire in 24 hours.</p>
+    `),
+    text: `Your WisdomWalk verification code is: ${code}\nThis code expires in 24 hours.`
   }),
 
-  passwordReset: (resetUrl) => ({
-    subject: 'Password Reset Request - PropertyAuto',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #2563eb; margin: 0;">PropertyAuto</h1>
-        </div>
-        
-        <h2 style="color: #333;">Password Reset Request</h2>
-        
-        <p style="color: #555; line-height: 1.6;">
-          You requested a password reset for your PropertyAuto account. Click the button below to reset your password:
-        </p>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" 
-             style="background: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            Reset Password
-          </a>
-        </div>
-        
-        <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 20px 0;">
-          <p style="color: #92400e; margin: 0; font-size: 14px;">
-            <strong>Security Notice:</strong> This link will expire in 10 minutes. If you didn't request this password reset, please ignore this email and your password will remain unchanged.
-          </p>
-        </div>
-        
-        <p style="color: #666; font-size: 14px; line-height: 1.6;">
-          If the button doesn't work, copy and paste this link into your browser:<br>
-          <a href="${resetUrl}" style="color: #2563eb; word-break: break-all;">${resetUrl}</a>
-        </p>
-        
-        <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
-          <p>Need help? Contact us at <a href="mailto:support@propertyauto.et">support@propertyauto.et</a></p>
-          <p>© 2024 PropertyAuto Ethiopia. All rights reserved.</p>
-        </div>
+  passwordReset: (name, code) => ({
+    subject: '🔐 Reset Your Password - WisdomWalk',
+    html: wrapEmail('Password Reset', `
+      <p>Hello ${name},</p>
+      <p>We received a request to reset your password. Use the code below:</p>
+      <div style="font-size: 24px; font-weight: bold; color: #A67B5B; text-align: center; margin: 30px 0;">
+        ${code}
       </div>
-    `
+      <p style="color: #666; font-size: 14px;">This code will expire in 15 minutes.</p>
+    `),
+    text: `Your WisdomWalk password reset code is: ${code}\nThis code expires in 15 minutes.`
   }),
 
-  verification: (verificationUrl, name) => ({
-    subject: 'Verify Your PropertyAuto Account',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #2563eb; margin: 0;">PropertyAuto</h1>
-        </div>
-        
-        <h2 style="color: #333;">Verify Your Account</h2>
-        
-        <p style="color: #555; line-height: 1.6;">
-          Hi ${name}, please verify your email address to complete your PropertyAuto registration.
-        </p>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${verificationUrl}" 
-             style="background: #16a34a; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            Verify Email Address
-          </a>
-        </div>
-        
-        <p style="color: #666; font-size: 14px; line-height: 1.6;">
-          If the button doesn't work, copy and paste this link into your browser:<br>
-          <a href="${verificationUrl}" style="color: #2563eb; word-break: break-all;">${verificationUrl}</a>
-        </p>
-        
-        <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
-          <p>© 2024 PropertyAuto Ethiopia. All rights reserved.</p>
-        </div>
+  adminNotification: (message, user) => ({
+    subject: 'Admin Notification - WisdomWalk',
+    html: wrapEmail('Admin Notification', `
+      <p>${message}</p>
+      <h4 style="color: #333;">User Details:</h4>
+      <ul style="color: #555; line-height: 1.8;">
+        <li><strong>Name:</strong> ${user.firstName} ${user.lastName}</li>
+        <li><strong>Email:</strong> ${user.email}</li>
+        <li><strong>Date of Birth:</strong> ${user.dateOfBirth}</li>
+        <li><strong>Phone:</strong> ${user.phoneNumber}</li>
+        <li><strong>Location:</strong> ${user.location}</li>
+      </ul>
+    `)
+  }),
+
+ 
+  
+ 
+ 
+  dealCreated: (firstName, dealId, itemTitle) => ({
+    subject: '🎉 New Deal Created - WisdomWalk',
+    html: wrapEmail('Deal Created', `
+      <p>Hi ${firstName},</p>
+      <p>Congratulations! You've created a new deal for <strong>${itemTitle}</strong>.</p>
+      <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #333; margin-top: 0;">Deal Details:</h3>
+        <ul style="color: #555; line-height: 1.8;">
+          <li><strong>Deal ID:</strong> ${dealId}</li>
+          <li><strong>Item:</strong> ${itemTitle}</li>
+        </ul>
       </div>
-    `
+      <p style="color: #555; line-height: 1.6;">The seller has been notified and will review your offer soon. You'll receive an update once the deal is accepted or responded to.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.CLIENT_URL}/deals/${dealId}" 
+           style="background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          View Deal
+        </a>
+      </div>
+    `),
+    text: `Hi ${firstName},\nYou've created a new deal for ${itemTitle}.\nDeal ID: ${dealId}\nThe seller has been notified. View your deal at ${process.env.CLIENT_URL}/deals/${dealId}.`
+  }),
+
+  dealAccepted: (firstName, itemTitle, price, sellerContact) => ({
+    subject: '✅ Deal Accepted - WisdomWalk',
+    html: wrapEmail('Deal Accepted', `
+      <p>Hi ${firstName},</p>
+      <p>Great news! Your deal for <strong>${itemTitle}</strong> has been accepted!</p>
+      <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #333; margin-top: 0;">Deal Details:</h3>
+        <ul style="color: #555; line-height: 1.8;">
+          <li><strong>Item:</strong> ${itemTitle}</li>
+          <li><strong>Agreed Price:</strong> ${price}</li>
+          <li><strong>Seller Contact:</strong> ${sellerContact}</li>
+        </ul>
+      </div>
+      <p style="color: #555; line-height: 1.6;">Please contact the seller to finalize payment and delivery details.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.CLIENT_URL}/deals" 
+           style="background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          View Your Deals
+        </a>
+      </div>
+      <div style="margin: 20px 0; padding: 15px; background: #fef2f2; border-radius: 6px; border-left: 4px solid #dc2626;">
+        <p style="color: #dc2626; margin: 0; font-size: 14px;">
+          <strong>Important:</strong> Ensure all transactions are secure and verified. Contact support if you encounter any issues.
+        </p>
+      </div>
+    `),
+    text: `Hi ${firstName},\nYour deal for ${itemTitle} has been accepted!\nAgreed Price: ${price}\nSeller Contact: ${sellerContact}\nView your deals at ${process.env.CLIENT_URL}/deals.`
   })
 };
 
 module.exports = {
   sendEmail,
-  emailTemplates
+  emailTemplates,
+  createTransporter
 };

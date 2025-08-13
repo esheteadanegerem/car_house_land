@@ -1,11 +1,9 @@
-const jwt = require('jsonwebtoken');
+const { verifyToken } = require('../utils/token');
 const User = require('../models/User');
-const { verifyToken } = require('../utils/jwt');
-
+ 
 const protect = async (req, res, next) => {
   try {
     let token;
-
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     } else if (req.cookies.token) {
@@ -15,7 +13,7 @@ const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         status: 'error',
-        message: 'Access denied. No token provided.'
+        message: 'Access denied. No token provided.',
       });
     }
 
@@ -25,14 +23,14 @@ const protect = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         status: 'error',
-        message: 'Token is not valid. User not found.'
+        message: 'Token is not valid. User not found.',
       });
     }
 
     if (!user.isActive) {
       return res.status(401).json({
         status: 'error',
-        message: 'Account is deactivated. Please contact support.'
+        message: 'Account is deactivated. Please contact support.',
       });
     }
 
@@ -43,43 +41,34 @@ const protect = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-
-    if (error.name === 'JsonWebTokenError') {
+    if (error.message === 'Invalid token' || error.message === 'Token expired') {
       return res.status(401).json({
         status: 'error',
-        message: 'Invalid token'
+        message: error.message,
       });
     }
-
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Token expired'
-      });
-    }
-
     res.status(500).json({
       status: 'error',
-      message: 'Server error in authentication'
+      message: 'Server error in authentication',
     });
   }
 };
-
+ 
 const adminOnly = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
     res.status(403).json({
       status: 'error',
-      message: 'Access denied. Admin privileges required.'
+      message: 'Access denied. Admin privileges required.',
     });
   }
 };
 
+ 
 const optionalAuth = async (req, res, next) => {
   try {
     let token;
-
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     } else if (req.cookies.token) {
@@ -87,23 +76,18 @@ const optionalAuth = async (req, res, next) => {
     }
 
     if (token) {
-      try {
-        const decoded = verifyToken(token);
-        const user = await User.findById(decoded.id).select('-password');
-        if (user && user.isActive) {
-          req.user = user;
-        }
-      } catch (error) {
-        // Ignore invalid token for optional auth
+      const decoded = verifyToken(token);
+      const user = await User.findById(decoded.id).select('-password');
+      if (user && user.isActive) {
+        req.user = user;
       }
     }
-
     next();
   } catch (error) {
     next();
   }
 };
-
+ 
 const sensitiveOperationLimit = (req, res, next) => {
   const userAttempts = global.userAttempts || {};
   const userId = req.user ? req.user._id.toString() : req.ip;
@@ -119,7 +103,7 @@ const sensitiveOperationLimit = (req, res, next) => {
     return res.status(429).json({
       status: 'error',
       message: 'Too many attempts. Please try again later.',
-      retryAfter: Math.ceil((userAttempts[userId].resetTime - now) / 1000)
+      retryAfter: Math.ceil((userAttempts[userId].resetTime - now) / 1000),
     });
   } else {
     userAttempts[userId].count++;
@@ -133,5 +117,5 @@ module.exports = {
   protect,
   adminOnly,
   optionalAuth,
-  sensitiveOperationLimit
+  sensitiveOperationLimit,
 };

@@ -1,13 +1,21 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const User = require('../models/User');
-const { generateToken, generateRefreshToken, verifyRefreshToken } = require('../utils/token');
+const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/token');
 const { sendEmail, emailTemplates } = require('../utils/email');
-const { generateRandomString } = require('../utils/helpers');
+const { generateRandomString } = require('../utils/helper');
  
  const register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, phone, role = 'user' } = req.body;
+const {
+  fullName,
+  email,
+  password,
+  phone,
+  role = 'user',
+  avatar = null,
+  address = { street: '', city: '', region: '', country: 'ETHIOPIA' }
+} = req.body;
 
     const existingUser = await User.findOne({
       $or: [
@@ -26,12 +34,13 @@ const { generateRandomString } = require('../utils/helpers');
 
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
     const user = await User.create({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      fullName: fullName.trim(),
       email: email.toLowerCase().trim(),
       password,
       phone: phone.trim(),
       role,
+      avatar,
+      address,
       verificationCode,
       verificationCodeExpire: Date.now() + 10 * 60 * 1000, // 10 minutes
       isVerified: false
@@ -67,8 +76,20 @@ const verifyEmail = async (req, res) => {
   try {
     const { email, code } = req.body;
 
+    // Validate request body
+    if (!email || !code) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Email and verification code are required'
+      });
+    }
+
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Find user with valid verification code
     const user = await User.findOne({
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       verificationCode: code,
       verificationCodeExpire: { $gt: Date.now() }
     });
@@ -80,35 +101,41 @@ const verifyEmail = async (req, res) => {
       });
     }
 
+    // Update user verification status
     user.isVerified = true;
     user.verificationCode = undefined;
     user.verificationCodeExpire = undefined;
+
     await user.save();
 
-    const token = generateToken({ id: user._id, role: user.role });
-    const refreshToken = generateRefreshToken({ id: user._id });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000
-    });
-
-    res.status(200).json({
+    return res.status(200).json({
       status: 'success',
-      message: 'Email verified successfully',
-      data: { user, token, refreshToken }
+      message: 'Email verified successfully'
     });
   } catch (error) {
     console.error('Email verification error:', error);
-    res.status(500).json({
+
+    // Handle specific errors
+    if (error.name === 'MongoServerError') {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Database error occurred'
+      });
+    }
+
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid user data'
+      });
+    }
+
+    return res.status(500).json({
       status: 'error',
       message: 'Failed to verify email'
     });
   }
 };
-
 
 const login = async (req, res) => {
   try {
@@ -117,23 +144,23 @@ const login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         status: 'error',
-        message: 'Please provide email and password'
+        message: 'Please provide email and password',
       });
     }
 
     const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
-    
+
     if (!user) {
       return res.status(401).json({
         status: 'error',
-        message: 'Invalid email or password'
+        message: 'Invalid email or password',
       });
     }
 
     if (!user.isActive) {
       return res.status(401).json({
         status: 'error',
-        message: 'Account is deactivated. Please contact support.'
+        message: 'Account is deactivated. Please contact support.',
       });
     }
 
@@ -141,39 +168,51 @@ const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         status: 'error',
-        message: 'Invalid email or password'
+        message: 'Invalid email or password',
       });
     }
 
+    // Update last login
+    user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
 
-    const token = generateToken({ id: user._id, role: user.role });
-    const refreshToken = generateRefreshToken({ id: user._id });
+    // Generate tokens
+    const token = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
+    // Set refresh token in HTTP-only cookie
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    user.password = undefined;
+    // Set access token in cookie (to support req.cookies.token in middleware)
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutes, matching access token expiry
+    });
+
+    // Prepare user data (exclude password)
+    const userData = await User.findById(user._id).select('-password');
 
     res.status(200).json({
       status: 'success',
       message: 'Login successful',
       data: {
-        user,
-        token,
-        refreshToken
-      }
+        user: userData,
+        token, // Still include access token in response for flexibility
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Login failed',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
@@ -197,7 +236,7 @@ const getMe = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const allowedFields = ['firstName', 'lastName', 'phone', 'address'];
+    const allowedFields = ['fullName', 'phone', 'address'];
     const updates = {};
 
     Object.keys(req.body).forEach(key => {
@@ -280,6 +319,7 @@ const changePassword = async (req, res) => {
     });
   }
 };
+
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -301,7 +341,7 @@ const forgotPassword = async (req, res) => {
     user.resetCodeExpire = Date.now() + 10 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
 
-    const resetEmail = emailTemplates.passwordResetCode(resetCode);
+    const resetEmail = emailTemplates.passwordReset(resetCode);
     await sendEmail({ email: user.email, ...resetEmail });
 
     res.status(200).json({
@@ -463,21 +503,51 @@ const refreshToken = async (req, res) => {
     });
   }
 };
-
 const logout = async (req, res) => {
   try {
-    res.clearCookie('refreshToken');
-    
+    // Clear both refreshToken and token cookies
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
     res.status(200).json({
       status: 'success',
-      message: 'Logged out successfully'
+      message: 'Logged out successfully',
     });
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to logout'
+      message: 'Failed to logout',
     });
+  }
+};
+const requestEmailVerification = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ status: 'error', message: 'User not found' });
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.verificationCode = verificationCode;
+    user.verificationCodeExpire = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    const emailContent = emailTemplates.verificationCode(verificationCode);
+    await sendEmail({ email: user.email, ...emailContent });
+
+    res.status(200).json({ status: 'success', message: 'Verification code sent to your email' });
+  } catch (error) {
+    console.error('Request email verification error:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to request email verification' });
   }
 };
 
@@ -492,5 +562,7 @@ module.exports = {
   refreshToken,
   logout,
   verifyEmail,
+  requestEmailVerification,
+  verifyResetCode
 
 };

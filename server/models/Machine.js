@@ -37,11 +37,7 @@ const machineSchema = new mongoose.Schema({
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative']
   },
-  currency: {
-    type: String,
-    enum: ['ETB', 'USD'],
-    default: 'ETB'
-  },
+ 
   yearManufactured: {
     type: Number,
     min: [1990, 'Year cannot be before 1990'],
@@ -94,7 +90,7 @@ const machineSchema = new mongoose.Schema({
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Owner',
+    ref: 'User',
     required: [true, 'Machine owner is required']
   },
   status: {
@@ -110,25 +106,6 @@ const machineSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  isPromoted: {
-    type: Boolean,
-    default: false
-  },
-  promotionExpiry: Date,
-  maintenance: {
-    lastService: Date,
-    nextService: Date,
-    serviceHistory: [{
-      date: Date,
-      description: String,
-      cost: Number
-    }]
-  },
-  certifications: [{
-    name: { type: String, required: true },
-    issuedBy: { type: String, required: true },
-    validUntil: Date
-  }],
   operatingConditions: {
     temperature: {
       min: Number,
@@ -143,8 +120,7 @@ const machineSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+   
 });
 
 // Indexes

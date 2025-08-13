@@ -18,17 +18,12 @@ const notificationSchema = new mongoose.Schema({
       'deal_accepted',
       'deal_rejected',
       'deal_completed',
-      'message_received',
-      'item_favorited',
-      'item_sold',
-      'item_rented',
-      'payment_received',
-      'payment_due',
+      
+       
       'verification_approved',
       'verification_rejected',
       'system_announcement',
-      'promotion_started',
-      'promotion_ended'
+
     ],
     required: [true, 'Notification type is required']
   },
@@ -51,11 +46,7 @@ const notificationSchema = new mongoose.Schema({
     actionUrl: String,
     metadata: mongoose.Schema.Types.Mixed
   },
-  priority: {
-    type: String,
-    enum: ['low', 'medium', 'high', 'urgent'],
-    default: 'medium'
-  },
+  
   channels: {
     inApp: { type: Boolean, default: true },
     email: { type: Boolean, default: false },
@@ -102,24 +93,7 @@ notificationSchema.methods.markAsRead = function() {
   this.readAt = new Date();
   return this.save();
 };
-
-// Static method to create notification
-notificationSchema.statics.createNotification = async function(data) {
-  const notification = new this(data);
-  await notification.save();
-  
-  // Emit socket event for real-time notification
-  if (global.io) {
-    global.io.to(`user_${data.recipient}`).emit('new_notification', notification);
-  }
-  
-  return notification;
-};
-
-// Static method to get unread count
-notificationSchema.statics.getUnreadCount = function(userId) {
-  return this.countDocuments({ recipient: userId, isRead: false });
-};
+ 
 
 // Static method to mark all as read
 notificationSchema.statics.markAllAsRead = function(userId) {
