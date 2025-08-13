@@ -26,8 +26,8 @@ export function AuthModal() {
 
   // Sample accounts for demonstration
   const sampleAccounts = {
-    user: { email: "user@demo.com", password: "user123", name: "John Doe", role: "user" as const },
-    admin: { email: "admin@demo.com", password: "admin123", name: "Admin User", role: "admin" as const },
+    user: { email: "user@demo.com", password: "user123", name: "Dawit Tesfaye", role: "user" as const },
+    admin: { email: "admin@demo.com", password: "admin123", name: "Meron Haile", role: "admin" as const },
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,6 +132,7 @@ export function AuthModal() {
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
+                    placeholder="abebe@example.com"
                     required
                   />
                 </div>
@@ -145,6 +146,7 @@ export function AuthModal() {
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={handleInputChange}
+                      placeholder="Enter your password"
                       required
                     />
                     <Button
@@ -175,6 +177,7 @@ export function AuthModal() {
                     type="text"
                     value={formData.name}
                     onChange={handleInputChange}
+                    placeholder="e.g. Tigist Alemayehu"
                     required
                   />
                 </div>
@@ -187,6 +190,7 @@ export function AuthModal() {
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
+                    placeholder="tigist@example.com"
                     required
                   />
                 </div>
@@ -200,6 +204,7 @@ export function AuthModal() {
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={handleInputChange}
+                      placeholder="Create a strong password"
                       required
                     />
                     <Button
@@ -223,6 +228,7 @@ export function AuthModal() {
                       type={showConfirmPassword ? "text" : "password"}
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
+                      placeholder="Confirm your password"
                       required
                     />
                     <Button

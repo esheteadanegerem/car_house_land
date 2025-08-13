@@ -272,11 +272,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date().toISOString(),
       chatHistory: [],
       adminInfo: {
-        name: "Admin Support",
-        email: "admin@massgebeya.com",
-        phone: "+1 (555) 123-4567",
-        telegram: "@massgebeya_admin",
-        whatsapp: "+1-555-123-4567",
+        name: "Alemayehu Bekele",
+        email: "admin@ethiopiapropertyauto.com",
+        phone: "+251 911 123 456",
+        telegram: "@ethiopiapropertyauto_admin",
+        whatsapp: "+251-911-123-456",
       },
     }
 

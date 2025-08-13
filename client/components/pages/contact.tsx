@@ -116,7 +116,7 @@ export function Contact() {
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        placeholder="Your full name"
+                        placeholder="e.g. Abebe Kebede"
                         required
                       />
                     </div>
@@ -130,7 +130,7 @@ export function Contact() {
                         type="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        placeholder="your.email@example.com"
+                        placeholder="abebe@example.com"
                         required
                       />
                     </div>

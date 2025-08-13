@@ -175,7 +175,7 @@ export function MachineListings() {
           </div>
 
           <div
-            className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 ${showFilters ? "block" : "hidden md:grid"}`}
+            className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 ${showFilters ? "block" : "hidden md:grid"}`}
           >
             <Select value={filters.listingType} onValueChange={(value) => handleFilterChange("listingType", value)}>
               <SelectTrigger className="text-sm">
@@ -234,10 +234,10 @@ export function MachineListings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-50000">Under $50K</SelectItem>
-                <SelectItem value="50000-100000">$50K - $100K</SelectItem>
-                <SelectItem value="100000-200000">$100K - $200K</SelectItem>
-                <SelectItem value="200000-999999999">Over $200K</SelectItem>
+                <SelectItem value="0-1250000">Under ETB 1.25M</SelectItem>
+                <SelectItem value="1250000-2500000">ETB 1.25M - 2.5M</SelectItem>
+                <SelectItem value="2500000-5000000">ETB 2.5M - 5M</SelectItem>
+                <SelectItem value="5000000-999999999">Over ETB 5M</SelectItem>
               </SelectContent>
             </Select>
 
@@ -279,7 +279,7 @@ export function MachineListings() {
         {/* Machines Grid/List */}
         {filteredMachines.length > 0 ? (
           <div
-            className={`${viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" : "space-y-3"}`}
+            className={`${viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}`}
           >
             {filteredMachines.map((machine, index) => (
               <div key={machine.id} className="animate-slide-in-up" style={{ animationDelay: `${index * 0.1}s` }}>

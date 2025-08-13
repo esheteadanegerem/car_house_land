@@ -55,8 +55,8 @@ export const cars: Car[] = [
   {
     id: "car-1",
     title: "2022 Tesla Model S Plaid",
-    price: 89999,
-    location: "San Francisco, CA",
+    price: 2250000,
+    location: "Bole, Addis Ababa",
     description:
       "Pristine condition Tesla Model S Plaid with autopilot, premium interior, and all the latest features. Only 15,000 miles, garage kept, and meticulously maintained.",
     images: [
@@ -69,8 +69,8 @@ export const cars: Car[] = [
     status: "available",
     rating: 4.9,
     reviews: 23,
-    sellerName: "Michael Chen",
-    sellerContact: "michael.chen@email.com",
+    sellerName: "Dawit Tesfaye",
+    sellerContact: "dawit.tesfaye@email.com",
     make: "Tesla",
     model: "Model S Plaid",
     year: 2022,
@@ -84,8 +84,8 @@ export const cars: Car[] = [
   {
     id: "car-2",
     title: "2021 BMW M4 Competition",
-    price: 67500,
-    location: "Los Angeles, CA",
+    price: 1687500,
+    location: "Kazanchis, Addis Ababa",
     description:
       "Stunning BMW M4 Competition in Alpine White with carbon fiber accents. Twin-turbo inline-6 engine, premium sound system, and sport seats.",
     images: [
@@ -98,8 +98,8 @@ export const cars: Car[] = [
     status: "available",
     rating: 4.7,
     reviews: 18,
-    sellerName: "Sarah Johnson",
-    sellerContact: "sarah.j@email.com",
+    sellerName: "Meron Haile",
+    sellerContact: "meron.haile@email.com",
     make: "BMW",
     model: "M4 Competition",
     year: 2021,
@@ -113,8 +113,8 @@ export const cars: Car[] = [
   {
     id: "car-3",
     title: "2020 Porsche 911 Carrera S",
-    price: 95000,
-    location: "Miami, FL",
+    price: 2375000,
+    location: "Piazza, Addis Ababa",
     description:
       "Exceptional Porsche 911 Carrera S with sport package, ceramic brakes, and premium leather interior. Perfect for weekend drives and track days.",
     images: [
@@ -127,8 +127,8 @@ export const cars: Car[] = [
     status: "available",
     rating: 4.8,
     reviews: 31,
-    sellerName: "David Rodriguez",
-    sellerContact: "d.rodriguez@email.com",
+    sellerName: "Yohannes Bekele",
+    sellerContact: "yohannes.bekele@email.com",
     make: "Porsche",
     model: "911 Carrera S",
     year: 2020,
@@ -142,8 +142,8 @@ export const cars: Car[] = [
   {
     id: "car-4",
     title: "2023 Audi RS6 Avant",
-    price: 78900,
-    location: "Seattle, WA",
+    price: 1972500,
+    location: "Megenagna, Addis Ababa",
     description:
       "Brand new Audi RS6 Avant wagon with twin-turbo V8, quattro all-wheel drive, and premium plus package. Perfect blend of performance and practicality.",
     images: [
@@ -156,8 +156,8 @@ export const cars: Car[] = [
     status: "available",
     rating: 4.9,
     reviews: 12,
-    sellerName: "Emma Wilson",
-    sellerContact: "emma.wilson@email.com",
+    sellerName: "Tigist Alemayehu",
+    sellerContact: "tigist.alemayehu@email.com",
     make: "Audi",
     model: "RS6 Avant",
     year: 2023,
@@ -171,8 +171,8 @@ export const cars: Car[] = [
   {
     id: "car-5",
     title: "2019 Mercedes-AMG GT 63 S",
-    price: 85000,
-    location: "New York, NY",
+    price: 2125000,
+    location: "Lebu, Addis Ababa",
     description:
       "Powerful Mercedes-AMG GT 63 S with handcrafted V8 biturbo engine, AMG performance seats, and premium sound system. Immaculate condition.",
     images: [
@@ -185,8 +185,8 @@ export const cars: Car[] = [
     status: "available",
     rating: 4.6,
     reviews: 27,
-    sellerName: "James Thompson",
-    sellerContact: "j.thompson@email.com",
+    sellerName: "Haile Mariam",
+    sellerContact: "haile.mariam@email.com",
     make: "Mercedes-Benz",
     model: "AMG GT 63 S",
     year: 2019,
@@ -202,11 +202,11 @@ export const cars: Car[] = [
 export const houses: House[] = [
   {
     id: "house-1",
-    title: "Modern Luxury Villa with Ocean View",
-    price: 2850000,
-    location: "Malibu, CA",
+    title: "Modern Luxury Villa with Mountain View",
+    price: 71250000,
+    location: "Bole, Addis Ababa",
     description:
-      "Stunning contemporary villa with panoramic ocean views, infinity pool, and high-end finishes throughout. Open floor plan perfect for entertaining.",
+      "Stunning contemporary villa with panoramic mountain views, infinity pool, and high-end finishes throughout. Open floor plan perfect for entertaining.",
     images: [
       "/placeholder.svg?height=400&width=600",
       "/placeholder.svg?height=300&width=400",
@@ -217,8 +217,8 @@ export const houses: House[] = [
     status: "available",
     rating: 4.9,
     reviews: 45,
-    sellerName: "Patricia Davis",
-    sellerContact: "patricia.davis@email.com",
+    sellerName: "Selamawit Desta",
+    sellerContact: "selamawit.desta@email.com",
     bedrooms: 5,
     bathrooms: 6,
     squareFeet: 4200,
@@ -230,11 +230,11 @@ export const houses: House[] = [
   },
   {
     id: "house-2",
-    title: "Historic Brownstone in Prime Location",
-    price: 1950000,
-    location: "Brooklyn, NY",
+    title: "Historic Villa in Prime Location",
+    price: 48750000,
+    location: "Piazza, Addis Ababa",
     description:
-      "Beautifully restored 19th-century brownstone with original details, modern amenities, and private garden. Located in coveted Park Slope neighborhood.",
+      "Beautifully restored historic villa with original details, modern amenities, and private garden. Located in coveted Piazza neighborhood.",
     images: [
       "/placeholder.svg?height=400&width=600",
       "/placeholder.svg?height=300&width=400",
@@ -245,12 +245,12 @@ export const houses: House[] = [
     status: "available",
     rating: 4.7,
     reviews: 32,
-    sellerName: "Robert Martinez",
-    sellerContact: "r.martinez@email.com",
+    sellerName: "Abebe Tadesse",
+    sellerContact: "abebe.tadesse@email.com",
     bedrooms: 4,
     bathrooms: 3,
     squareFeet: 3100,
-    propertyType: "Townhouse",
+    propertyType: "Villa",
     yearBuilt: 1895,
     parking: "Street parking",
     createdAt: "2024-01-11T15:45:00Z",
@@ -259,8 +259,8 @@ export const houses: House[] = [
   {
     id: "house-3",
     title: "Contemporary Penthouse with City Views",
-    price: 3200000,
-    location: "Chicago, IL",
+    price: 80000000,
+    location: "Kazanchis, Addis Ababa",
     description:
       "Spectacular penthouse with floor-to-ceiling windows, private terrace, and breathtaking city skyline views. Premium building amenities included.",
     images: [
@@ -273,8 +273,8 @@ export const houses: House[] = [
     status: "available",
     rating: 4.8,
     reviews: 28,
-    sellerName: "Lisa Anderson",
-    sellerContact: "lisa.anderson@email.com",
+    sellerName: "Hanan Girma",
+    sellerContact: "hanan.girma@email.com",
     bedrooms: 3,
     bathrooms: 4,
     squareFeet: 2800,
@@ -286,11 +286,11 @@ export const houses: House[] = [
   },
   {
     id: "house-4",
-    title: "Charming Craftsman Bungalow",
-    price: 875000,
-    location: "Portland, OR",
+    title: "Charming Traditional House",
+    price: 21875000,
+    location: "Lebu, Addis Ababa",
     description:
-      "Beautifully maintained Craftsman bungalow with original hardwood floors, built-in cabinetry, and mature landscaping. Move-in ready.",
+      "Beautifully maintained traditional house with original hardwood floors, built-in cabinetry, and mature landscaping. Move-in ready.",
     images: [
       "/placeholder.svg?height=400&width=600",
       "/placeholder.svg?height=300&width=400",
@@ -301,8 +301,8 @@ export const houses: House[] = [
     status: "available",
     rating: 4.6,
     reviews: 19,
-    sellerName: "Mark Johnson",
-    sellerContact: "mark.johnson@email.com",
+    sellerName: "Mulugeta Assefa",
+    sellerContact: "mulugeta.assefa@email.com",
     bedrooms: 3,
     bathrooms: 2,
     squareFeet: 1850,
@@ -314,11 +314,11 @@ export const houses: House[] = [
   },
   {
     id: "house-5",
-    title: "Luxury Ranch Estate with Acreage",
-    price: 1650000,
-    location: "Austin, TX",
+    title: "Luxury Estate with Acreage",
+    price: 41250000,
+    location: "Megenagna, Addis Ababa",
     description:
-      "Expansive ranch-style home on 5 acres with pool, guest house, and horse facilities. Perfect for those seeking privacy and luxury.",
+      "Expansive estate-style home on 5 acres with pool, guest house, and garden facilities. Perfect for those seeking privacy and luxury.",
     images: [
       "/placeholder.svg?height=400&width=600",
       "/placeholder.svg?height=300&width=400",
@@ -329,12 +329,12 @@ export const houses: House[] = [
     status: "available",
     rating: 4.9,
     reviews: 37,
-    sellerName: "Jennifer Brown",
-    sellerContact: "jennifer.brown@email.com",
+    sellerName: "Berhanu Tesfaye",
+    sellerContact: "berhanu.tesfaye@email.com",
     bedrooms: 4,
     bathrooms: 5,
     squareFeet: 3600,
-    propertyType: "Ranch",
+    propertyType: "Estate",
     yearBuilt: 2018,
     parking: "4-car garage",
     createdAt: "2024-01-13T11:00:00Z",
@@ -346,8 +346,8 @@ export const lands: Land[] = [
   {
     id: "land-1",
     title: "Prime Commercial Development Land",
-    price: 1250000,
-    location: "Phoenix, AZ",
+    price: 31250000,
+    location: "Bole, Addis Ababa",
     description:
       "Exceptional commercial development opportunity on major thoroughfare. Zoned for mixed-use development with high traffic counts and excellent visibility.",
     images: [
@@ -360,8 +360,8 @@ export const lands: Land[] = [
     status: "available",
     rating: 4.5,
     reviews: 14,
-    sellerName: "Thomas Wilson",
-    sellerContact: "thomas.wilson@email.com",
+    sellerName: "Alemayehu Bekele",
+    sellerContact: "alemayehu.bekele@email.com",
     acres: 8.5,
     zoning: "Commercial Mixed-Use",
     utilities: ["Water", "Sewer", "Electric", "Gas", "Fiber"],
@@ -373,8 +373,8 @@ export const lands: Land[] = [
   {
     id: "land-2",
     title: "Scenic Mountain View Acreage",
-    price: 485000,
-    location: "Asheville, NC",
+    price: 12125000,
+    location: "Entoto, Addis Ababa",
     description:
       "Beautiful 12-acre parcel with stunning mountain views, creek frontage, and mature hardwood trees. Perfect for custom home or retreat.",
     images: [
@@ -387,8 +387,8 @@ export const lands: Land[] = [
     status: "available",
     rating: 4.8,
     reviews: 22,
-    sellerName: "Nancy Garcia",
-    sellerContact: "nancy.garcia@email.com",
+    sellerName: "Tigist Alemayehu",
+    sellerContact: "tigist.alemayehu@email.com",
     acres: 12.3,
     zoning: "Residential Rural",
     utilities: ["Well water", "Septic approved", "Electric nearby"],
@@ -400,10 +400,10 @@ export const lands: Land[] = [
   {
     id: "land-3",
     title: "Agricultural Farmland with Water Rights",
-    price: 750000,
-    location: "Fresno, CA",
+    price: 18750000,
+    location: "Debre Zeit, Oromia",
     description:
-      "Productive agricultural land with established irrigation, water rights, and fertile soil. Currently planted with almonds and generating income.",
+      "Productive agricultural land with established irrigation, water rights, and fertile soil. Currently planted with crops and generating income.",
     images: [
       "/placeholder.svg?height=400&width=600",
       "/placeholder.svg?height=300&width=400",
@@ -414,8 +414,8 @@ export const lands: Land[] = [
     status: "available",
     rating: 4.7,
     reviews: 18,
-    sellerName: "Carlos Mendez",
-    sellerContact: "carlos.mendez@email.com",
+    sellerName: "Dawit Tesfaye",
+    sellerContact: "dawit.tesfaye@email.com",
     acres: 25.0,
     zoning: "Agricultural",
     utilities: ["Irrigation water", "Electric", "Equipment barn"],
@@ -426,11 +426,11 @@ export const lands: Land[] = [
   },
   {
     id: "land-4",
-    title: "Waterfront Development Opportunity",
-    price: 2100000,
-    location: "Lake Tahoe, CA",
+    title: "Lakefront Development Opportunity",
+    price: 52500000,
+    location: "Lake Tana, Bahir Dar",
     description:
-      "Rare waterfront development opportunity with 300 feet of lake frontage. Approved for luxury residential development with stunning lake views.",
+      "Rare lakefront development opportunity with 300 feet of lake frontage. Approved for luxury residential development with stunning lake views.",
     images: [
       "/placeholder.svg?height=400&width=600",
       "/placeholder.svg?height=300&width=400",
@@ -441,8 +441,8 @@ export const lands: Land[] = [
     status: "available",
     rating: 4.9,
     reviews: 31,
-    sellerName: "Michelle Taylor",
-    sellerContact: "michelle.taylor@email.com",
+    sellerName: "Meron Haile",
+    sellerContact: "meron.haile@email.com",
     acres: 4.2,
     zoning: "Residential Waterfront",
     utilities: ["Water", "Sewer", "Electric", "Cable"],
@@ -454,10 +454,10 @@ export const lands: Land[] = [
   {
     id: "land-5",
     title: "Industrial Zoned Land Near Airport",
-    price: 950000,
-    location: "Denver, CO",
+    price: 23750000,
+    location: "Bole International Airport Area",
     description:
-      "Strategic industrial land near Denver International Airport. Perfect for logistics, warehousing, or manufacturing. Rail access available.",
+      "Strategic industrial land near Bole International Airport. Perfect for logistics, warehousing, or manufacturing. Rail access available.",
     images: [
       "/placeholder.svg?height=400&width=600",
       "/placeholder.svg?height=300&width=400",
@@ -468,8 +468,8 @@ export const lands: Land[] = [
     status: "available",
     rating: 4.4,
     reviews: 12,
-    sellerName: "Kevin O'Brien",
-    sellerContact: "kevin.obrien@email.com",
+    sellerName: "Yohannes Bekele",
+    sellerContact: "yohannes.bekele@email.com",
     acres: 15.8,
     zoning: "Industrial Heavy",
     utilities: ["Water", "Sewer", "Electric", "Gas", "Rail spur"],
@@ -484,8 +484,8 @@ export const machines: Machine[] = [
   {
     id: "machine-1",
     title: "CAT 320 Hydraulic Excavator",
-    price: 185000,
-    location: "Houston, TX",
+    price: 4625000,
+    location: "Addis Ababa Industrial Zone",
     description:
       "Well-maintained Caterpillar 320 hydraulic excavator with low hours. Includes multiple buckets, hydraulic hammer, and recent service records.",
     images: [
@@ -498,8 +498,8 @@ export const machines: Machine[] = [
     status: "available",
     rating: 4.6,
     reviews: 15,
-    sellerName: "Construction Solutions LLC",
-    sellerContact: "sales@constructionsolutions.com",
+    sellerName: "Haile Mariam Construction",
+    sellerContact: "sales@haileconstruction.et",
     category: "Construction Equipment",
     condition: "Excellent",
     hoursUsed: 2850,
@@ -512,8 +512,8 @@ export const machines: Machine[] = [
   {
     id: "machine-2",
     title: "John Deere 6155R Tractor",
-    price: 145000,
-    location: "Des Moines, IA",
+    price: 3625000,
+    location: "Debre Zeit, Oromia",
     description:
       "Powerful John Deere 6155R tractor with front loader, GPS guidance, and premium cab. Perfect for large farming operations.",
     images: [
@@ -526,8 +526,8 @@ export const machines: Machine[] = [
     status: "available",
     rating: 4.8,
     reviews: 23,
-    sellerName: "Midwest Farm Equipment",
-    sellerContact: "info@midwestfarm.com",
+    sellerName: "Abebe Tadesse Farm Equipment",
+    sellerContact: "info@abebeequipment.et",
     category: "Agricultural Equipment",
     condition: "Very Good",
     hoursUsed: 1650,
@@ -540,8 +540,8 @@ export const machines: Machine[] = [
   {
     id: "machine-3",
     title: "Bobcat S770 Skid Steer Loader",
-    price: 68000,
-    location: "Atlanta, GA",
+    price: 1700000,
+    location: "Mekelle, Tigray",
     description:
       "Versatile Bobcat S770 skid steer loader with multiple attachments. Low hours, well-maintained, and ready for immediate use.",
     images: [
@@ -554,8 +554,8 @@ export const machines: Machine[] = [
     status: "available",
     rating: 4.5,
     reviews: 18,
-    sellerName: "Southern Equipment Co.",
-    sellerContact: "sales@southernequip.com",
+    sellerName: "Berhanu Tesfaye Equipment",
+    sellerContact: "sales@berhanuequip.et",
     category: "Construction Equipment",
     condition: "Good",
     hoursUsed: 3200,
@@ -568,8 +568,8 @@ export const machines: Machine[] = [
   {
     id: "machine-4",
     title: "Komatsu PC210LC-11 Excavator",
-    price: 195000,
-    location: "Las Vegas, NV",
+    price: 4875000,
+    location: "Hawassa, SNNPR",
     description:
       "Advanced Komatsu PC210LC-11 excavator with intelligent machine control, fuel-efficient engine, and spacious operator cab.",
     images: [
@@ -582,8 +582,8 @@ export const machines: Machine[] = [
     status: "available",
     rating: 4.7,
     reviews: 21,
-    sellerName: "Desert Heavy Equipment",
-    sellerContact: "contact@desertheavy.com",
+    sellerName: "Mulugeta Assefa Heavy Equipment",
+    sellerContact: "contact@mulugetaheavy.et",
     category: "Construction Equipment",
     condition: "Excellent",
     hoursUsed: 1950,
@@ -596,8 +596,8 @@ export const machines: Machine[] = [
   {
     id: "machine-5",
     title: "Case IH Magnum 380 CVT Tractor",
-    price: 285000,
-    location: "Omaha, NE",
+    price: 7125000,
+    location: "Bahir Dar, Amhara",
     description:
       "High-performance Case IH Magnum 380 CVT tractor with advanced technology, comfortable cab, and exceptional fuel efficiency.",
     images: [
@@ -610,8 +610,8 @@ export const machines: Machine[] = [
     status: "available",
     rating: 4.9,
     reviews: 16,
-    sellerName: "Great Plains Ag Equipment",
-    sellerContact: "sales@greatplainsag.com",
+    sellerName: "Selamawit Desta Ag Equipment",
+    sellerContact: "sales@selamwitag.et",
     category: "Agricultural Equipment",
     condition: "Like New",
     hoursUsed: 850,

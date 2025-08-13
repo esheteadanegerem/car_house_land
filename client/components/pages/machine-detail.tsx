@@ -20,7 +20,7 @@ import {
   Heart,
   ShoppingCart,
 } from "lucide-react"
-import { machines } from "@/lib/data"
+import { MACHINES_DATA } from "@/lib/data/machines"
 import { useApp } from "@/context/app-context"
 
 interface MachineDetailProps {
@@ -31,7 +31,7 @@ export function MachineDetail({ machineId }: MachineDetailProps) {
   const { dispatch } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
-  const machine = machines.find((m) => m.id === machineId)
+  const machine = MACHINES_DATA.find((m) => m.id === machineId)
 
   if (!machine) {
     return (

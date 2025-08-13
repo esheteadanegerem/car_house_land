@@ -1373,7 +1373,7 @@ export function AdminDashboard() {
                   </div>
 
                   <div className="space-y-3 sm:space-y-4">
-                    <h3 className="text-base sm:text-lg font-semibold">User Information</h3>
+                    <h3 className="text-base sm:text-lg font-semibold">Customer Information</h3>
 
                     <Card>
                       <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
@@ -1413,18 +1413,67 @@ export function AdminDashboard() {
                             </div>
                           )}
                         </div>
+                      </CardContent>
+                    </Card>
+
+                    <h3 className="text-base sm:text-lg font-semibold">Seller Information</h3>
+
+                    <Card>
+                      <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+                        <div className="text-center">
+                          <h4 className="font-semibold text-sm sm:text-base">{selectedDeal.item.sellerName}</h4>
+                          <p className="text-xs sm:text-sm text-gray-600">Item Owner</p>
+                        </div>
 
                         <Separator />
 
                         <div className="space-y-2">
-                          <h5 className="font-medium text-xs sm:text-sm">Deal Timeline</h5>
-                          <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                            <p>Created: {new Date(selectedDeal.createdAt).toLocaleString()}</p>
-                            <p>Last Updated: {new Date(selectedDeal.updatedAt).toLocaleString()}</p>
+                          <div className="flex items-center space-x-3">
+                            <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-brand-purple" />
+                            <div>
+                              <p className="font-medium text-xs sm:text-sm">Email</p>
+                              <a
+                                href={`mailto:${selectedDeal.item.sellerEmail}`}
+                                className="text-brand-purple hover:underline text-xs sm:text-sm"
+                              >
+                                {selectedDeal.item.sellerEmail}
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-3">
+                            <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-brand-orange" />
+                            <div>
+                              <p className="font-medium text-xs sm:text-sm">Phone</p>
+                              <a
+                                href={`tel:${selectedDeal.item.sellerPhone}`}
+                                className="text-brand-orange hover:underline text-xs sm:text-sm"
+                              >
+                                {selectedDeal.item.sellerPhone}
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-3">
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gray-300 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-medium text-gray-600">ID</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-xs sm:text-sm">Seller ID</p>
+                              <span className="text-xs sm:text-sm text-gray-600">{selectedDeal.item.sellerId}</span>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
+
+                    <div className="space-y-2">
+                      <h5 className="font-medium text-xs sm:text-sm">Deal Timeline</h5>
+                      <div className="text-xs sm:text-sm text-gray-600 space-y-1">
+                        <p>Created: {new Date(selectedDeal.createdAt).toLocaleString()}</p>
+                        <p>Last Updated: {new Date(selectedDeal.updatedAt).toLocaleString()}</p>
+                      </div>
+                    </div>
 
                     <div className="space-y-3">
                       {selectedDeal.status === "pending" && (
@@ -1483,17 +1532,32 @@ export function AdminDashboard() {
                         <Button asChild variant="outline" className="w-full bg-transparent text-xs sm:text-sm">
                           <a href={`mailto:${selectedDeal.userEmail}`}>
                             <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                            Email User
+                            Email Customer
                           </a>
                         </Button>
                         {selectedDeal.userPhone && (
                           <Button asChild variant="outline" className="w-full bg-transparent text-xs sm:text-sm">
                             <a href={`tel:${selectedDeal.userPhone}`}>
                               <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                              Call User
+                              Call Customer
                             </a>
                           </Button>
                         )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button asChild variant="outline" className="w-full bg-transparent text-xs sm:text-sm">
+                          <a href={`mailto:${selectedDeal.item.sellerEmail}`}>
+                            <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                            Email Seller
+                          </a>
+                        </Button>
+                        <Button asChild variant="outline" className="w-full bg-transparent text-xs sm:text-sm">
+                          <a href={`tel:${selectedDeal.item.sellerPhone}`}>
+                            <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                            Call Seller
+                          </a>
+                        </Button>
                       </div>
                     </div>
                   </div>

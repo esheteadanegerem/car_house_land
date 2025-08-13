@@ -228,7 +228,7 @@ export function LandListings() {
 
         {/* Lands Grid */}
         {filteredLands.length > 0 ? (
-          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
             {filteredLands.map((land) => (
               <ItemCard key={land.id} item={land} type="land" />
             ))}

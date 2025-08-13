@@ -19,7 +19,7 @@ export const HOUSES_DATA: House[] = [
     ],
     status: "available",
     rating: 4.8,
-    agent: "Bole Real Estate",
+    agent: "Tigist Alemayehu Real Estate",
     description: "Beautiful modern family home with spacious rooms, modern kitchen, and private garden.",
   },
   {
@@ -40,7 +40,7 @@ export const HOUSES_DATA: House[] = [
     ],
     status: "available",
     rating: 4.9,
-    agent: "Downtown Properties",
+    agent: "Selamawit Desta Properties",
     description: "Luxury apartment in the heart of downtown with premium finishes and city views.",
   },
 ]

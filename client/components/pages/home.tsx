@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
-import { cars, houses, lands, machines } from "@/lib/data"
+import { CARS_DATA } from "@/lib/data/cars"
+import { houses, lands, machines } from "@/lib/data"
 
 export function Home() {
   const { user, setIsAuthModalOpen } = useApp()
@@ -39,8 +40,7 @@ export function Home() {
   ]
 
   const featuredListings = [
-    ...cars
-      .filter((car) => car.featured)
+    ...CARS_DATA.filter((car) => car.featured)
       .slice(0, 2)
       .map((car) => ({
         id: car.id,

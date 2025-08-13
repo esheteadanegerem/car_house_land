@@ -145,7 +145,13 @@ export function CarDetail({ carId }: CarDetailProps) {
                 <Button
                   size="lg"
                   className="flex-1 text-sm sm:text-base py-2.5 sm:py-3"
-                  onClick={() => {}}
+                  onClick={() => {
+                    if (user) {
+                      addToCart("car", car)
+                    } else {
+                      setIsAuthModalOpen(true)
+                    }
+                  }}
                   disabled={!user}
                 >
                   Add to Cart

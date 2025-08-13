@@ -168,7 +168,7 @@ export function HouseListings() {
           </div>
 
           <div
-            className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 ${showFilters ? "block" : "hidden md:grid"}`}
+            className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 ${showFilters ? "block" : "hidden md:grid"}`}
           >
             <Select value={filters.listingType} onValueChange={(value) => handleFilterChange("listingType", value)}>
               <SelectTrigger className="text-sm">
@@ -270,7 +270,7 @@ export function HouseListings() {
         {/* Houses Grid/List */}
         {filteredHouses.length > 0 ? (
           <div
-            className={`${viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" : "space-y-3"} animate-fade-in`}
+            className={`${viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"} animate-fade-in`}
           >
             {filteredHouses.map((house, index) => (
               <div key={house.id} className="animate-slide-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
