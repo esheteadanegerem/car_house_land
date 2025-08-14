@@ -83,6 +83,7 @@ export interface Car {
 export interface House {
   id: string
   title: string
+  
   price: number
   bedrooms: number
   bathrooms: number

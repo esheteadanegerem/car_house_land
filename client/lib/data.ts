@@ -5,7 +5,7 @@ export const cars: Car[] = [
     id: "car-1",
     title: "2023 Toyota Camry Hybrid",
     price: 28500,
-    location: "Los Angeles, CA",
+    location: "Kasanchez, AA",
     images: [
       "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&h=600&fit=crop&crop=center",
@@ -32,12 +32,13 @@ export const cars: Car[] = [
     bodyType: "sedan",
     color: "Silver",
     engine: "2.5L Hybrid",
+    listingType: "sale"
   },
   {
     id: "car-2",
     title: "2022 BMW X3 M40i",
     price: 52000,
-    location: "Miami, FL",
+    location: " Saris,AA",
     images: [
       "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&h=600&fit=crop&crop=center",
@@ -64,12 +65,13 @@ export const cars: Car[] = [
     bodyType: "suv",
     color: "Black",
     engine: "3.0L Turbo",
+    listingType: "sale"
   },
   {
     id: "car-3",
     title: "2024 Mercedes-Benz C-Class",
     price: 45000,
-    location: "Chicago, IL",
+    location: "Megenagna, AA",
     images: [
       "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop&crop=center",
@@ -95,12 +97,13 @@ export const cars: Car[] = [
     bodyType: "sedan",
     color: "White",
     engine: "2.0L Turbo",
+    listingType: "sale"
   },
   {
     id: "car-4",
     title: "2023 Tesla Model 3",
     price: 38000,
-    location: "San Francisco, CA",
+    location: "Hayat, AA",
     images: [
       "https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&h=600&fit=crop&crop=center",
@@ -126,6 +129,7 @@ export const cars: Car[] = [
     bodyType: "sedan",
     color: "Blue",
     engine: "Electric Motor",
+    listingType: "sale"
   },
 ]
 
@@ -134,22 +138,20 @@ export const houses: House[] = [
     id: "house-1",
     title: "Modern Family Home",
     price: 750000,
-    location: "Austin, TX",
+    location: " Senbeta, Addis Ababa",
     images: [
-      "https://images.unsplash.com/photo-1600382017468-9049fed747ef?w=800&h=600&fit=crop&crop=center",
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Beautiful 4-bedroom home with modern amenities and large backyard.",
-    rating: 4.7,
+
     reviews: 12,
     status: "available",
     featured: true,
     createdAt: "2024-01-20",
     sellerId: "agent-1",
-    sellerName: "Sarah Johnson",
+    sellerName: "Yordanos Getenet",
     sellerPhone: "+1 (555) 234-5678",
     sellerEmail: "sarah@realestate.com",
     bedrooms: 4,
@@ -160,14 +162,15 @@ export const houses: House[] = [
     yearBuilt: 2020,
     parking: 2,
     amenities: ["Pool", "Garden", "Garage", "Modern Kitchen"],
-    agentName: "Sarah Johnson",
+    agentName: "Sarblet Tesfaye",
     agentPhone: "+1 (555) 234-5678",
+    rating: 0
   },
   {
     id: "house-2",
     title: "Downtown Luxury Apartment",
     price: 3500,
-    location: "New York, NY",
+    location: "Addis Ababa,AA ",
     images: [
       "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop&crop=center",
@@ -181,7 +184,7 @@ export const houses: House[] = [
     featured: true,
     createdAt: "2024-01-18",
     sellerId: "agent-2",
-    sellerName: "Michael Chen",
+    sellerName: "Michkyas Chernet",
     sellerPhone: "+1 (555) 345-6789",
     sellerEmail: "michael@nyrealty.com",
     bedrooms: 2,
@@ -192,14 +195,14 @@ export const houses: House[] = [
     yearBuilt: 2019,
     parking: 1,
     amenities: ["City View", "Gym", "Concierge", "Rooftop Terrace"],
-    agentName: "Michael Chen",
+    agentName: "Natan Gedion",
     agentPhone: "+1 (555) 345-6789",
   },
   {
     id: "house-3",
     title: "Suburban Villa with Pool",
     price: 950000,
-    location: "Phoenix, AZ",
+    location: "Bahidar , Ba",
     images: [
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=800&h=600&fit=crop&crop=center",
@@ -212,7 +215,7 @@ export const houses: House[] = [
     featured: true,
     createdAt: "2024-01-23",
     sellerId: "agent-7",
-    sellerName: "Desert Realty",
+    sellerName: "Tewodros Getachew",
     sellerPhone: "+1 (555) 555-6666",
     sellerEmail: "info@desertrealty.com",
     bedrooms: 5,
@@ -223,7 +226,7 @@ export const houses: House[] = [
     yearBuilt: 2018,
     parking: 3,
     amenities: ["Pool", "Desert View", "3-Car Garage", "Wine Cellar"],
-    agentName: "Desert Realty",
+    agentName: "Bahiru Zewdu",
     agentPhone: "+1 (555) 555-6666",
   },
 ]
@@ -233,7 +236,7 @@ export const lands: Land[] = [
     id: "land-1",
     title: "Premium Development Land",
     price: 250000,
-    location: "Phoenix, AZ",
+    location: "Kasanchez, AA",
     images: [
       "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&crop=center",
@@ -246,7 +249,7 @@ export const lands: Land[] = [
     featured: true,
     createdAt: "2024-01-12",
     sellerId: "agent-3",
-    sellerName: "Desert Land Co.",
+    sellerName: "Degu Baye.",
     sellerPhone: "+1 (555) 456-7890",
     sellerEmail: "info@desertland.com",
     size: 5,
@@ -262,7 +265,7 @@ export const lands: Land[] = [
     id: "land-2",
     title: "Agricultural Farmland",
     price: 180000,
-    location: "Iowa City, IA",
+    location: "Lemikora,AA" ,
     images: [
       "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&h=600&fit=crop&crop=center",
@@ -275,7 +278,7 @@ export const lands: Land[] = [
     featured: false,
     createdAt: "2024-01-08",
     sellerId: "agent-4",
-    sellerName: "Farm Properties Inc.",
+    sellerName: "Abinnet Daniel.",
     sellerPhone: "+1 (555) 567-8901",
     sellerEmail: "sales@farmproperties.com",
     size: 10,
@@ -294,7 +297,7 @@ export const machines: Machine[] = [
     id: "machine-1",
     title: "CAT 320 Excavator",
     price: 85000,
-    location: "Houston, TX",
+    location: "Piyasa, AA",
     images: [
       "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=600&fit=crop&crop=center",
@@ -320,12 +323,13 @@ export const machines: Machine[] = [
     capacity: "1.2 cubic yards",
     hoursUsed: 2800,
     warranty: "6 months parts and labor",
+    listingType: "sale"
   },
   {
     id: "machine-2",
     title: "John Deere 6120M Tractor",
     price: 95000,
-    location: "Kansas City, MO",
+    location: "Koyefeche, AA",
     images: [
       "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop&crop=center",
@@ -351,5 +355,6 @@ export const machines: Machine[] = [
     capacity: "N/A",
     hoursUsed: 1200,
     warranty: "12 months full warranty",
+    listingType: "sale"
   },
 ]

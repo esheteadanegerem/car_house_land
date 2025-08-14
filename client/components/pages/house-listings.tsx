@@ -212,10 +212,10 @@ export function HouseListings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-500000">Under $500K</SelectItem>
-                <SelectItem value="500000-1000000">$500K - $1M</SelectItem>
-                <SelectItem value="1000000-2000000">$1M - $2M</SelectItem>
-                <SelectItem value="2000000-999999999">Over $2M</SelectItem>
+                <SelectItem value="0-500000">Under 500K</SelectItem>
+                <SelectItem value="500000-1000000">500K - 1M</SelectItem>
+                <SelectItem value="1000000-2000000">1M - 2M</SelectItem>
+                <SelectItem value="2000000-999999999">Over 2M</SelectItem>
               </SelectContent>
             </Select>
 
