@@ -20,7 +20,6 @@ import {
   Heart,
   ShoppingCart,
 } from "lucide-react"
-import { lands } from "@/lib/data"
 import { useApp } from "@/context/app-context"
 
 interface LandDetailProps {
@@ -28,10 +27,20 @@ interface LandDetailProps {
 }
 
 export function LandDetail({ landId }: LandDetailProps) {
-  const { dispatch } = useApp()
+  const { lands, dispatch } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
-  const land = lands.find((l) => l.id === landId)
+  const land = lands?.find((l) => l.id === landId || l.id === String(landId) || String(l.id) === landId)
+
+  if (!lands) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Loading...</h1>
+        </div>
+      </div>
+    )
+  }
 
   if (!land) {
     return (
@@ -52,9 +61,9 @@ export function LandDetail({ landId }: LandDetailProps) {
 
   const formatPrice = (price: number) => {
     if (land.listingType === "rent") {
-      return `$${price.toLocaleString()}/month`
+      return `${(price || 0).toLocaleString()} ETB/month`
     }
-    return `$${price.toLocaleString()}`
+    return `${(price || 0).toLocaleString()} ETB`
   }
 
   return (
@@ -74,14 +83,14 @@ export function LandDetail({ landId }: LandDetailProps) {
               <CardContent className="p-0">
                 <div className="aspect-[16/10] relative overflow-hidden rounded-t-lg">
                   <Image
-                    src={land.images[selectedImageIndex] || "/placeholder.svg"}
-                    alt={land.title}
+                    src={land.images?.[selectedImageIndex] || "/placeholder.svg"}
+                    alt={land.title || "Land"}
                     fill
                     className="object-cover"
                   />
                   <div className="absolute top-4 left-4">
                     <Badge variant="secondary" className="bg-yellow-500 text-white">
-                      {land.status}
+                      {land.status || "Available"}
                     </Badge>
                   </div>
                   {land.featured && (
@@ -93,7 +102,7 @@ export function LandDetail({ landId }: LandDetailProps) {
                   )}
                 </div>
 
-                {land.images.length > 1 && (
+                {land.images && land.images.length > 1 && (
                   <div className="p-4 flex space-x-2 overflow-x-auto">
                     {land.images.map((image, index) => (
                       <button
@@ -105,7 +114,7 @@ export function LandDetail({ landId }: LandDetailProps) {
                       >
                         <Image
                           src={image || "/placeholder.svg"}
-                          alt={`${land.title} ${index + 1}`}
+                          alt={`${land.title || "Land"} ${index + 1}`}
                           width={80}
                           height={64}
                           className="w-full h-full object-cover"
@@ -164,16 +173,18 @@ export function LandDetail({ landId }: LandDetailProps) {
                   <p className="text-gray-600">{land.developmentPotential}</p>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold mb-2">Available Utilities</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {land.utilities.map((utility, index) => (
-                      <Badge key={index} variant="outline">
-                        {utility}
-                      </Badge>
-                    ))}
+                {land.utilities && land.utilities.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Available Utilities</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {land.utilities.map((utility, index) => (
+                        <Badge key={index} variant="outline">
+                          {utility}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -219,13 +230,15 @@ export function LandDetail({ landId }: LandDetailProps) {
                   <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
                     <span className="font-semibold text-yellow-600">
                       {land.sellerName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                        ? land.sellerName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                        : "NA"}
                     </span>
                   </div>
                   <div>
-                    <p className="font-semibold">{land.sellerName}</p>
+                    <p className="font-semibold">{land.sellerName || "No Agent Assigned"}</p>
                     <p className="text-sm text-gray-600">Licensed Land Agent</p>
                   </div>
                 </div>
@@ -233,11 +246,11 @@ export function LandDetail({ landId }: LandDetailProps) {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Phone className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">{land.sellerPhone}</span>
+                    <span className="text-sm">{land.sellerPhone || "No phone available"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Mail className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">{land.sellerEmail}</span>
+                    <span className="text-sm">{land.sellerEmail || "No email available"}</span>
                   </div>
                 </div>
 

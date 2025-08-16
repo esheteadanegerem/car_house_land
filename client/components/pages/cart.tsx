@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Heart } from "lucide-react"
 import { useApp } from "@/context/app-context"
+import { useState } from "react"
 
 export function Cart() {
-  const { cart = [], dispatch, removeFromCart, updateCartQuantity } = useApp()
+  const { cart = [], dispatch, removeFromCart, updateCartQuantity, user, createDeal } = useApp()
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -228,12 +230,14 @@ export function Cart() {
                   </div>
                 </div>
 
-                <Button
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 transform hover:scale-105 transition-all duration-200"
-                  size="lg"
-                >
-                  Proceed to Checkout
-                </Button>
+                <Link href="/deals">
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 transform hover:scale-105 transition-all duration-200"
+                    size="lg"
+                  >
+                    Go to Deals
+                  </Button>
+                </Link>
 
                 <div className="text-center">
                   <Link

@@ -3,9 +3,7 @@ import type { Metadata } from "next"
 import { GeistSans, GeistMono } from "geist/font"
 import "./globals.css"
 import { AppProvider } from "@/context/app-context"
-import { Navigation } from "@/components/layout/navigation"
-import { Footer } from "@/components/layout/footer"
-import { AuthModal } from "@/components/ui/auth-modal"
+import { LayoutContent } from "@/components/layout/layout-content"
 
 export const metadata: Metadata = {
   title: "🚗 🏠 መስገበያ - የኢትዮጵያ መኪና እና ንብረት መድረክ | Ethiopian Cars & Properties Platform",
@@ -23,12 +21,7 @@ export default function RootLayout({
     <html lang="am" className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
       <body style={{ fontFamily: GeistSans.style.fontFamily }}>
         <AppProvider>
-          <div className="min-h-screen bg-background">
-            <Navigation />
-            <main className="pt-16 min-h-[calc(100vh-4rem)]">{children}</main>
-            <Footer />
-            <AuthModal />
-          </div>
+          <LayoutContent>{children}</LayoutContent>
         </AppProvider>
       </body>
     </html>

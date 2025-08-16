@@ -8,11 +8,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ItemCard } from "@/components/ui/item-card"
 import { Search, Grid3X3, List, Filter } from "lucide-react"
-import { MACHINES_DATA } from "@/lib/data/machines"
+// import { MACHINES_DATA } from "@/lib/data/machines"
 import type { Machine } from "@/types"
+import { useApp } from "@/context/app-context"
 
 export function MachineListings() {
-  const [filteredMachines, setFilteredMachines] = React.useState<Machine[]>(MACHINES_DATA)
+  const { machines } = useApp()
+  const [filteredMachines, setFilteredMachines] = React.useState<Machine[]>(machines)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
   const [showFilters, setShowFilters] = React.useState(false)
@@ -27,16 +29,16 @@ export function MachineListings() {
   })
 
   React.useEffect(() => {
-    let filtered = [...MACHINES_DATA]
+    let filtered = [...machines]
 
     // Search filter
     if (searchQuery) {
       filtered = filtered.filter(
         (machine) =>
-          machine.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          machine.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          machine.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          machine.location.toLowerCase().includes(searchQuery.toLowerCase()),
+          (machine.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (machine.brand?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (machine.model?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (machine.location?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
       )
     }
 
@@ -45,8 +47,8 @@ export function MachineListings() {
         // Determine listing type from price and title
         const isRental =
           machine.price < 50000 ||
-          machine.title.toLowerCase().includes("rental") ||
-          machine.title.toLowerCase().includes("rent")
+          (machine.title?.toLowerCase() || "").includes("rental") ||
+          (machine.title?.toLowerCase() || "").includes("rent")
         const listingType = isRental ? "rent" : "sale"
         return listingType === filters.listingType
       })
@@ -64,7 +66,7 @@ export function MachineListings() {
 
     // Brand filter
     if (filters.brand !== "all") {
-      filtered = filtered.filter((machine) => machine.brand.toLowerCase() === filters.brand)
+      filtered = filtered.filter((machine) => (machine.brand?.toLowerCase() || "") === filters.brand)
     }
 
     // Price range filter
@@ -99,7 +101,7 @@ export function MachineListings() {
     }
 
     setFilteredMachines(filtered)
-  }, [searchQuery, filters])
+  }, [searchQuery, filters, machines])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
@@ -130,7 +132,7 @@ export function MachineListings() {
 
             <div className="flex justify-center space-x-4">
               <Badge variant="secondary" className="bg-green-500 text-white px-3 py-1 text-sm">
-                {MACHINES_DATA.length} Machines Available
+                {machines.length} Machines Available
               </Badge>
               <Badge variant="secondary" className="bg-white/20 text-white px-3 py-1 text-sm">
                 Certified Equipment
@@ -272,7 +274,7 @@ export function MachineListings() {
         {/* Results Count */}
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
-            Showing {filteredMachines.length} of {MACHINES_DATA.length} machines
+            Showing {filteredMachines.length} of {machines.length} machines
           </p>
         </div>
 

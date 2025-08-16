@@ -4,6 +4,10 @@ import { useEffect } from "react"
 import type React from "react"
 import { createContext, useContext, useReducer, type ReactNode } from "react"
 import type { User, Car, House, Land, Machine, Deal } from "@/types"
+import { CARS_DATA } from "@/lib/data/cars"
+import { houses } from "@/lib/data"
+import { MACHINES_DATA } from "@/lib/data/machines"
+import { LANDS_DATA } from "@/lib/data/lands"
 
 interface AppState {
   user: User | null
@@ -21,6 +25,10 @@ interface AppState {
   deals: Deal[]
   soldItems: Set<string>
   isAuthModalOpen: boolean
+  cars: Car[]
+  houses: House[]
+  machines: Machine[]
+  lands: Land[]
 }
 
 type AppAction =
@@ -54,6 +62,22 @@ type AppAction =
         item: Car | House | Land | Machine
       }>
     }
+  | { type: "SET_CARS"; payload: Car[] }
+  | { type: "ADD_CAR"; payload: Car }
+  | { type: "UPDATE_CAR"; payload: { id: string; updates: Partial<Car> } }
+  | { type: "DELETE_CAR"; payload: string }
+  | { type: "SET_HOUSES"; payload: House[] }
+  | { type: "ADD_HOUSE"; payload: House }
+  | { type: "UPDATE_HOUSE"; payload: { id: string; updates: Partial<House> } }
+  | { type: "DELETE_HOUSE"; payload: string }
+  | { type: "SET_MACHINES"; payload: Machine[] }
+  | { type: "ADD_MACHINE"; payload: Machine }
+  | { type: "UPDATE_MACHINE"; payload: { id: string; updates: Partial<Machine> } }
+  | { type: "DELETE_MACHINE"; payload: string }
+  | { type: "SET_LANDS"; payload: Land[] }
+  | { type: "ADD_LAND"; payload: Land }
+  | { type: "UPDATE_LAND"; payload: { id: string; updates: Partial<Land> } }
+  | { type: "DELETE_LAND"; payload: string }
 
 interface AppContextType extends AppState {
   dispatch: React.Dispatch<AppAction>
@@ -78,6 +102,18 @@ interface AppContextType extends AppState {
   getPendingDealsCount: () => number
   getUserDeals: () => Deal[]
   getAdminDeals: () => Deal[]
+  addCar: (car: Car) => void
+  updateCar: (id: string, updates: Partial<Car>) => void
+  deleteCar: (id: string) => void
+  addHouse: (house: House) => void
+  updateHouse: (id: string, updates: Partial<House>) => void
+  deleteHouse: (id: string) => void
+  addMachine: (machine: Machine) => void
+  updateMachine: (id: string, updates: Partial<Machine>) => void
+  deleteMachine: (id: string) => void
+  addLand: (land: Land) => void
+  updateLand: (id: string, updates: Partial<Land>) => void
+  deleteLand: (id: string) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -144,6 +180,56 @@ function appReducer(state: AppState, action: AppAction): AppState {
           deal.id === action.payload.id ? { ...deal, ...action.payload.updates } : deal,
         ),
       }
+    case "SET_CARS":
+      return { ...state, cars: action.payload }
+    case "ADD_CAR":
+      return { ...state, cars: [...state.cars, action.payload] }
+    case "UPDATE_CAR":
+      return {
+        ...state,
+        cars: state.cars.map((car) => (car.id === action.payload.id ? { ...car, ...action.payload.updates } : car)),
+      }
+    case "DELETE_CAR":
+      return { ...state, cars: state.cars.filter((car) => car.id !== action.payload) }
+    case "SET_HOUSES":
+      return { ...state, houses: action.payload }
+    case "ADD_HOUSE":
+      return { ...state, houses: [...state.houses, action.payload] }
+    case "UPDATE_HOUSE":
+      return {
+        ...state,
+        houses: state.houses.map((house) =>
+          house.id === action.payload.id ? { ...house, ...action.payload.updates } : house,
+        ),
+      }
+    case "DELETE_HOUSE":
+      return { ...state, houses: state.houses.filter((house) => house.id !== action.payload) }
+    case "SET_MACHINES":
+      return { ...state, machines: action.payload }
+    case "ADD_MACHINE":
+      return { ...state, machines: [...state.machines, action.payload] }
+    case "UPDATE_MACHINE":
+      return {
+        ...state,
+        machines: state.machines.map((machine) =>
+          machine.id === action.payload.id ? { ...machine, ...action.payload.updates } : machine,
+        ),
+      }
+    case "DELETE_MACHINE":
+      return { ...state, machines: state.machines.filter((machine) => machine.id !== action.payload) }
+    case "SET_LANDS":
+      return { ...state, lands: action.payload }
+    case "ADD_LAND":
+      return { ...state, lands: [...state.lands, action.payload] }
+    case "UPDATE_LAND":
+      return {
+        ...state,
+        lands: state.lands.map((land) =>
+          land.id === action.payload.id ? { ...land, ...action.payload.updates } : land,
+        ),
+      }
+    case "DELETE_LAND":
+      return { ...state, lands: state.lands.filter((land) => land.id !== action.payload) }
     default:
       return state
   }
@@ -157,6 +243,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deals: [],
     soldItems: new Set(),
     isAuthModalOpen: false,
+    cars: CARS_DATA,
+    houses: houses,
+    machines: MACHINES_DATA,
+    lands: LANDS_DATA,
   })
 
   const addToCart = (type: "car" | "house" | "land" | "machine", item: Car | House | Land | Machine) => {
@@ -340,6 +430,68 @@ export function AppProvider({ children }: { children: ReactNode }) {
           dispatch({ type: "SET_DEALS", payload: parsedDeals })
         }
       }
+
+      const savedCars = localStorage.getItem("carsData")
+      if (savedCars) {
+        try {
+          const parsedCars = JSON.parse(savedCars)
+          if (Array.isArray(parsedCars) && parsedCars.length > 0) {
+            // Merge with static data, avoiding duplicates
+            const mergedCars = [...CARS_DATA]
+            parsedCars.forEach((savedCar: Car) => {
+              if (!mergedCars.find((car) => car.id === savedCar.id)) {
+                mergedCars.push(savedCar)
+              }
+            })
+            dispatch({ type: "SET_CARS", payload: mergedCars })
+          }
+        } catch (error) {
+          console.error("Error parsing saved cars:", error)
+        }
+      }
+
+      const savedHouses = localStorage.getItem("housesData")
+      if (savedHouses) {
+        const parsedHouses = JSON.parse(savedHouses)
+        if (Array.isArray(parsedHouses)) {
+          const mergedHouses = [...houses]
+          parsedHouses.forEach((savedHouse: House) => {
+            if (!mergedHouses.find((house) => house.id === savedHouse.id)) {
+              mergedHouses.push(savedHouse)
+            }
+          })
+          dispatch({ type: "SET_HOUSES", payload: mergedHouses })
+        }
+      }
+
+      const savedMachines = localStorage.getItem("machinesData")
+      if (savedMachines) {
+        const parsedMachines = JSON.parse(savedMachines)
+        if (Array.isArray(parsedMachines)) {
+          const mergedMachines = [...MACHINES_DATA]
+          parsedMachines.forEach((savedMachine: Machine) => {
+            if (!mergedMachines.find((machine) => machine.id === savedMachine.id)) {
+              mergedMachines.push(savedMachine)
+            }
+          })
+          dispatch({ type: "SET_MACHINES", payload: mergedMachines })
+        }
+      }
+
+      const savedLands = localStorage.getItem("landsData")
+      if (savedLands) {
+        const parsedLands = JSON.parse(savedLands)
+        if (Array.isArray(parsedLands)) {
+          // Merge static lands data with saved admin-added lands
+          const mergedLands = [...LANDS_DATA]
+          parsedLands.forEach((savedLand: Land) => {
+            if (!mergedLands.find((land) => land.id === savedLand.id)) {
+              mergedLands.push(savedLand)
+            }
+          })
+          dispatch({ type: "SET_LANDS", payload: mergedLands })
+        }
+      }
     } catch (error) {
       console.error("Error loading data from localStorage:", error)
     }
@@ -370,6 +522,96 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [state.deals])
 
+  useEffect(() => {
+    try {
+      // Only save dynamically added cars (not the original static ones)
+      const dynamicCars = state.cars.filter((car) => !CARS_DATA.find((staticCar) => staticCar.id === car.id))
+      if (dynamicCars.length > 0) {
+        localStorage.setItem("carsData", JSON.stringify(dynamicCars))
+      }
+    } catch (error) {
+      console.error("Error saving cars to localStorage:", error)
+    }
+  }, [state.cars])
+
+  useEffect(() => {
+    try {
+      const dynamicHouses = state.houses.filter((house) => !houses.find((staticHouse) => staticHouse.id === house.id))
+      localStorage.setItem("housesData", JSON.stringify(dynamicHouses))
+    } catch (error) {
+      console.error("Error saving houses to localStorage:", error)
+    }
+  }, [state.houses])
+
+  useEffect(() => {
+    try {
+      const dynamicMachines = state.machines.filter(
+        (machine) => !MACHINES_DATA.find((staticMachine) => staticMachine.id === machine.id),
+      )
+      localStorage.setItem("machinesData", JSON.stringify(dynamicMachines))
+    } catch (error) {
+      console.error("Error saving machines to localStorage:", error)
+    }
+  }, [state.machines])
+
+  useEffect(() => {
+    try {
+      // Only save dynamically added lands (not the original static ones)
+      const dynamicLands = state.lands.filter((land) => !LANDS_DATA.find((staticLand) => staticLand.id === land.id))
+      localStorage.setItem("landsData", JSON.stringify(dynamicLands))
+    } catch (error) {
+      console.error("Error saving lands to localStorage:", error)
+    }
+  }, [state.lands])
+
+  const addCar = (car: Car) => {
+    dispatch({ type: "ADD_CAR", payload: car })
+  }
+
+  const updateCar = (id: string, updates: Partial<Car>) => {
+    dispatch({ type: "UPDATE_CAR", payload: { id, updates } })
+  }
+
+  const deleteCar = (id: string) => {
+    dispatch({ type: "DELETE_CAR", payload: id })
+  }
+
+  const addHouse = (house: House) => {
+    dispatch({ type: "ADD_HOUSE", payload: house })
+  }
+
+  const updateHouse = (id: string, updates: Partial<House>) => {
+    dispatch({ type: "UPDATE_HOUSE", payload: { id, updates } })
+  }
+
+  const deleteHouse = (id: string) => {
+    dispatch({ type: "DELETE_HOUSE", payload: id })
+  }
+
+  const addMachine = (machine: Machine) => {
+    dispatch({ type: "ADD_MACHINE", payload: machine })
+  }
+
+  const updateMachine = (id: string, updates: Partial<Machine>) => {
+    dispatch({ type: "UPDATE_MACHINE", payload: { id, updates } })
+  }
+
+  const deleteMachine = (id: string) => {
+    dispatch({ type: "DELETE_MACHINE", payload: id })
+  }
+
+  const addLand = (land: Land) => {
+    dispatch({ type: "ADD_LAND", payload: land })
+  }
+
+  const updateLand = (id: string, updates: Partial<Land>) => {
+    dispatch({ type: "UPDATE_LAND", payload: { id, updates } })
+  }
+
+  const deleteLand = (id: string) => {
+    dispatch({ type: "DELETE_LAND", payload: id })
+  }
+
   const value: AppContextType = {
     ...state,
     dispatch,
@@ -390,6 +632,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getPendingDealsCount,
     getUserDeals,
     getAdminDeals,
+    addCar,
+    updateCar,
+    deleteCar,
+    addHouse,
+    updateHouse,
+    deleteHouse,
+    addMachine,
+    updateMachine,
+    deleteMachine,
+    addLand,
+    updateLand,
+    deleteLand,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

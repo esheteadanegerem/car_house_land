@@ -21,10 +21,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useApp } from "@/context/app-context"
-import { CARS_DATA } from "@/lib/data/cars"
 
 export function CarListings() {
-  const { addToCart, user, setIsAuthModalOpen, soldItems, createDeal, toggleFavorite, isFavorite } = useApp() // Added toggleFavorite and isFavorite
+  const { addToCart, user, setIsAuthModalOpen, soldItems, createDeal, toggleFavorite, isFavorite, cars } = useApp()
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showMobileFilters, setShowMobileFilters] = useState(false)
@@ -39,16 +38,17 @@ export function CarListings() {
     listingType: "all",
   })
 
-  const filteredCars = CARS_DATA.filter((car) => {
+  const filteredCars = cars.filter((car) => {
     const matchesSearch =
-      car.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      car.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      car.title.toLowerCase().includes(searchTerm.toLowerCase())
+      (car.make?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (car.model?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (car.title?.toLowerCase() || "").includes(searchTerm.toLowerCase())
     const matchesCondition = filters.condition === "all" || car.condition === filters.condition
     const matchesMake = filters.make === "all" || car.make === filters.make
     const matchesFuelType = filters.fuelType === "all" || car.fuelType === filters.fuelType
     const matchesTransmission = filters.transmission === "all" || car.transmission === filters.transmission
-    const matchesLocation = !filters.location || car.location.toLowerCase().includes(filters.location.toLowerCase())
+    const matchesLocation =
+      !filters.location || (car.location?.toLowerCase() || "").includes(filters.location.toLowerCase())
     const matchesListingType = filters.listingType === "all" || car.listingType === filters.listingType
 
     return (
@@ -243,7 +243,7 @@ export function CarListings() {
         {/* Results */}
         <div className="mb-6">
           <p className="text-muted-foreground">
-            Showing {filteredCars.length} of {CARS_DATA.length} cars
+            Showing {filteredCars.length} of {cars.length} cars
           </p>
         </div>
 
@@ -296,10 +296,10 @@ export function CarListings() {
 
                     <div className="flex items-center justify-between">
                       <span className="text-2xl font-bold text-blue-600">
-                        ETB {car.price.toLocaleString()}
+                        ETB {(car.price || 0).toLocaleString()}
                         {car.listingType === "rent" && (
                           <span className="text-sm font-normal text-muted-foreground">
-                            {car.price <= 5000 ? "/day" : "/month"}
+                            {(car.price || 0) <= 5000 ? "/day" : "/month"}
                           </span>
                         )}
                       </span>
@@ -308,7 +308,7 @@ export function CarListings() {
                     <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                       <div className="flex items-center">
                         <Settings className="w-4 h-4 mr-1" />
-                        {car.mileage.toLocaleString()} km
+                        {(car.mileage || 0).toLocaleString()} km
                       </div>
                       <div className="flex items-center">
                         <Fuel className="w-4 h-4 mr-1" />

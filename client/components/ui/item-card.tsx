@@ -83,35 +83,36 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
   }
 
   const formatPrice = (price: number) => {
+    const safePrice = price || 0
     const isRental = isRentalItem()
     if (isRental) {
       if (type === "machine") {
-        return price <= 5000 ? `${price.toLocaleString()} ብር/ቀን` : `${price.toLocaleString()} ብር/ወር`
+        return safePrice <= 5000 ? `${safePrice.toLocaleString()} ብር/ቀን` : `${safePrice.toLocaleString()} ብር/ወር`
       }
       if (type === "house" && "listingType" in item && item.listingType === "rent") {
-        return `${price.toLocaleString()} ብር/ወር`
+        return `${safePrice.toLocaleString()} ብር/ወር`
       }
       if (type === "car" && "listingType" in item && item.listingType === "rent") {
-        return price <= 5000 ? `${price.toLocaleString()} ብር/ቀን` : `${price.toLocaleString()} ብር/ወር`
+        return safePrice <= 5000 ? `${safePrice.toLocaleString()} ብር/ቀን` : `${safePrice.toLocaleString()} ብር/ወር`
       }
     }
-    return `${price.toLocaleString()} ብር`
+    return `${safePrice.toLocaleString()} ብር`
   }
 
   const getItemDetails = () => {
     switch (type) {
       case "car":
         const car = item as Car
-        return `${car.year} • ${car.mileage.toLocaleString()} miles • ${car.fuelType}`
+        return `${car.year || "N/A"} • ${(car.mileage || 0).toLocaleString()} miles • ${car.fuelType || "N/A"}`
       case "house":
         const house = item as House
-        return `${house.bedrooms} bed • ${house.bathrooms} bath • ${house.size.toLocaleString()} sq ft`
+        return `${house.bedrooms || 0} bed • ${house.bathrooms || 0} bath • ${(house.size || 0).toLocaleString()} sq ft`
       case "land":
         const land = item as Land
-        return `${land.size} acres • ${land.zoning} • ${land.listingType}`
+        return `${land.size || "N/A"} acres • ${land.zoning || "N/A"} • ${land.listingType || "N/A"}`
       case "machine":
         const machine = item as Machine
-        return `${machine.year} • ${machine.hoursUsed.toLocaleString()} hrs • ${machine.condition}`
+        return `${machine.year || "N/A"} • ${(machine.hoursUsed || 0).toLocaleString()} hrs • ${machine.condition || "N/A"}`
       default:
         return ""
     }
