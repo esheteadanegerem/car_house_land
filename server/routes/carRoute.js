@@ -9,37 +9,42 @@ const {
   toggleFavorite,
   getCarStats
 } = require('../controllers/carController');
-const { protect, adminOnly, optionalAuth } = require('../middleware/auth');
-const { validateRequest } = require('../middleware/validation');
-
+const { protect, adminOnly, optionalAuth } = require('../middlewares/auth');
+const { validateRequest } = require('../middlewares/validation');
+const { upload } = require('../utils/cloudinary');
+const rateLimit = require('express-rate-limit');
+const multer = require('multer'); // Added to fix ReferenceError
 const router = express.Router();
+
+// Multer error handler
+const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ status: 'error', message: `Multer error: ${err.message}` });
+  }
+  if (err) {
+    return res.status(400).json({ status: 'error', message: err.message });
+  }
+  next();
+};
+
+// Rate limiter
+const createCarLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per IP
+  message: { status: 'error', message: 'Too many requests, please try again later' }
+});
 
 // Validation rules
 const createCarValidation = [
-  body('title')
-    .trim()
-    .isLength({ min: 5, max: 100 })
-    .withMessage('Title must be between 5 and 100 characters'),
-  body('make')
-    .trim()
-    .notEmpty()
-    .withMessage('Car make is required'),
-  body('model')
-    .trim()
-    .notEmpty()
-    .withMessage('Car model is required'),
+  body('title').trim().isLength({ min: 5, max: 100 }).withMessage('Title must be between 5 and 100 characters'),
+  body('make').trim().notEmpty().withMessage('Car make is required'),
+  body('model').trim().notEmpty().withMessage('Car model is required'),
   body('year')
     .isInt({ min: 1990, max: new Date().getFullYear() + 1 })
     .withMessage('Year must be between 1990 and next year'),
-  body('type')
-    .isIn(['sale', 'rent'])
-    .withMessage('Type must be either sale or rent'),
-  body('condition')
-    .isIn(['new', 'used'])
-    .withMessage('Condition must be either new or used'),
-  body('price')
-    .isFloat({ min: 0 })
-    .withMessage('Price must be a positive number'),
+  body('type').isIn(['sale', 'rent']).withMessage('Type must be either sale or rent'),
+  body('condition').isIn(['new', 'used']).withMessage('Condition must be either new or used'),
+  body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
   body('fuelType')
     .isIn(['gasoline', 'diesel', 'hybrid', 'electric'])
     .withMessage('Invalid fuel type'),
@@ -47,28 +52,15 @@ const createCarValidation = [
     .isIn(['manual', 'automatic'])
     .withMessage('Transmission must be either manual or automatic'),
   body('bodyType')
-    .isIn(['sedan s', 'suv', 'hatchback', 'coupe', 'pickup', 'van', 'convertible'])
+    .isIn(['sedan', 'suv', 'hatchback', 'coupe', 'pickup', 'van', 'convertible'])
     .withMessage('Invalid body type'),
-  body('color')
-    .trim()
-    .notEmpty()
-    .withMessage('Color is required'),
+  body('color').trim().notEmpty().withMessage('Color is required'),
   body('description')
     .trim()
     .isLength({ min: 20, max: 1000 })
     .withMessage('Description must be between 20 and 1000 characters'),
-  body('location.address')
-    .trim()
-    .notEmpty()
-    .withMessage('Address is required'),
-  body('location.city')
-    .trim()
-    .notEmpty()
-    .withMessage('City is required'),
-  body('location.region')
-    .trim()
-    .notEmpty()
-    .withMessage('Region is required')
+  body('owner').isMongoId().withMessage('Invalid owner ID'),
+  
 ];
 
 const updateCarValidation = [
@@ -91,8 +83,9 @@ const updateCarValidation = [
 
 // Public routes
 router.get('/', optionalAuth, getCars);
-router.get('/stats', getCarStats);
-router.get('/:id',
+router.get('/car/stats', getCarStats);
+router.get(
+  '/:id',
   param('id').isMongoId().withMessage('Invalid car ID'),
   validateRequest,
   optionalAuth,
@@ -100,30 +93,40 @@ router.get('/:id',
 );
 
 // Protected routes
-router.use(protect); // All routes below require authentication
+router.use(protect);
 
-router.post('/:id/favorite',
+router.post(
+  '/:id/favorite',
   param('id').isMongoId().withMessage('Invalid car ID'),
   validateRequest,
   toggleFavorite
 );
 
 // Admin only routes
-router.post('/',
+router.post(
+  '/',
+  protect,
   adminOnly,
+  createCarLimiter,
+  upload.array('images', 3),
+  handleMulterError,
   createCarValidation,
   validateRequest,
   createCar
 );
 
-router.put('/:id',
+router.put(
+  '/:id',
   adminOnly,
+  param('id').isMongoId().withMessage('Invalid car ID'),
+  upload.array('images', 10),
   updateCarValidation,
   validateRequest,
   updateCar
 );
 
-router.delete('/:id',
+router.delete(
+  '/:id',
   adminOnly,
   param('id').isMongoId().withMessage('Invalid car ID'),
   validateRequest,

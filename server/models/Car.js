@@ -79,9 +79,9 @@ const carSchema = new mongoose.Schema({
     isPrimary: { type: Boolean, default: false }
   }],
   location: {
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    region: { type: String, required: true },
+    address: { type: String,   },
+    city: { type: String  },
+    region: { type: String  },
     coordinates: {
       latitude: Number,
       longitude: Number
@@ -115,7 +115,6 @@ const carSchema = new mongoose.Schema({
 carSchema.index({ make: 1, model: 1 });
 carSchema.index({ type: 1, status: 1 });
 carSchema.index({ price: 1 });
-carSchema.index({ location: '2dsphere' });
 carSchema.index({ createdAt: -1 });
 
 // Virtual for primary image

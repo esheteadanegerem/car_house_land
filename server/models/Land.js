@@ -50,10 +50,6 @@ const landSchema = new mongoose.Schema({
     gas: { type: Boolean, default: false },
     internet: { type: Boolean, default: false }
   },
-  waterRights: {
-    type: Boolean,
-    default: false
-  },
    
   description: {
     type: String,
@@ -66,16 +62,11 @@ const landSchema = new mongoose.Schema({
     isPrimary: { type: Boolean, default: false },
     description: { type: String, trim: true }
   }],
-  location: {
-    address: { type: String, required: true },
+   
     city: { type: String, required: true },
     region: { type: String, required: true },
     zone: { type: String, trim: true },
-    coordinates: {
-      latitude: Number,
-      longitude: Number
-    }
-  },
+    kebele: { type: String, trim: true },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

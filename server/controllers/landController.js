@@ -1,5 +1,8 @@
-const Land = require('../models/Land');
 const asyncHandler = require('express-async-handler');
+const Land = require('../models/Land');
+const User = require('../models/User');
+const { cloudinary } = require('../utils/cloudinary');
+const mongoose =require("mongoose")
 
 const getLands = asyncHandler(async (req, res) => {
   const lands = await Land.find().lean();
@@ -17,40 +20,96 @@ const getLandById = asyncHandler(async (req, res) => {
 });
 
 const createLand = asyncHandler(async (req, res) => {
-  if (!req.user.isAdmin) {
-    res.status(401);
-    throw new Error('Not authorized, admin access required');
-  }
-
   const {
     title, price, size, zoning, landUse, topography, waterAccess,
-    roadAccess, utilities, waterRights, description, images,
-    location, nearbyAmenities
+    roadAccess, utilities, waterRights, description, nearbyAmenities, owner, city, region, zone, kebele
   } = req.body;
 
-  const land = await Land.create({
-    title,
-    price,
-    size,
-    zoning,
-    landUse,
-    topography,
-    waterAccess,
-    roadAccess,
-    utilities,
-    waterRights,
-    description,
-    images,
-    location,
-    nearbyAmenities,
-    owner: req.user._id
-  });
+  // Log request body for debugging
+  console.log('Request body:', req.body);
+  console.log('Uploaded files:', req.files);
 
-  if (land) {
-    res.status(201).json(land);
-  } else {
+  // Validate required fields
+  const requiredFields = ['title', 'price', 'zoning', 'landUse', 'topography', 'roadAccess', 'description', 'owner'];
+  for (const field of requiredFields) {
+    if (!req.body[field]) {
+      res.status(400);
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
+
+  // Validate owner ObjectId
+  if (!mongoose.isValidObjectId(owner)) {
     res.status(400);
-    throw new Error('Invalid land data');
+    throw new Error('Invalid owner ID');
+  }
+
+  // Check if owner exists
+  const ownerExists = await User.findById(owner);
+  if (!ownerExists) {
+    res.status(400);
+    throw new Error('Owner not found');
+  }
+
+  // Handle image uploads
+  let images = [];
+  if (req.files && req.files.length > 0) {
+    if (req.files.length > 3) {
+      res.status(400);
+      throw new Error('Maximum 3 images allowed');
+    }
+    images = req.files.map((file, index) => ({
+      url: file.path, // Cloudinary URL
+      publicId: file.filename, // Cloudinary public ID
+      isPrimary: index === 0,
+      description: `Image for ${title || 'land'}`
+    }));
+  }
+
+  // Parse nested fields safely
+  const parseJSONSafely = (str, field) => {
+    try {
+      return str ? JSON.parse(str) : undefined;
+    } catch (error) {
+      res.status(400);
+      throw new Error(`Invalid JSON format for ${field}: ${error.message}`);
+    }
+  };
+
+  try {
+    const land = await Land.create({
+      title,
+      price: parseFloat(price), // Ensure price is a number
+      size: parseJSONSafely(size, 'size'),
+      zoning,
+      landUse,
+      topography,
+      waterAccess,
+      roadAccess,
+      utilities: parseJSONSafely(utilities, 'utilities'),
+      waterRights: waterRights ? waterRights === 'true' : undefined, // Convert string to boolean
+      description,
+      images,
+      zone,
+      city,
+      region,
+      kebele,
+      nearbyAmenities: parseJSONSafely(nearbyAmenities, 'nearbyAmenities'),
+      owner,
+    });
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Land created successfully',
+      data: land,
+    });
+  } catch (error) {
+    console.error('Create land error:', error);
+    res.status(400).json({
+      status: 'error',
+      message: `Failed to create land: ${error.message}`,
+      body: req.body,
+    });
   }
 });
 
@@ -76,20 +135,58 @@ const updateLand = asyncHandler(async (req, res) => {
 });
 
 const deleteLand = asyncHandler(async (req, res) => {
-  if (!req.user.isAdmin) {
-    res.status(401);
-    throw new Error('Not authorized, admin access required');
-  }
-
   const land = await Land.findById(req.params.id);
   if (!land) {
     res.status(404);
     throw new Error('Land not found');
   }
 
+  // Delete associated images from Cloudinary
+  let cloudinaryErrors = [];
+  if (land.images && land.images.length > 0) {
+    try {
+      await Promise.all(
+        land.images.map(async (image) => {
+          try {
+            await cloudinary.uploader.destroy(image.publicId);
+            console.log('Deleted image from Cloudinary', { publicId: image.publicId });
+          } catch (error) {
+            console.error('Failed to delete image from Cloudinary:', {
+              publicId: image.publicId,
+              error: error.message || 'Unknown error',
+            });
+            cloudinaryErrors.push({
+              publicId: image.publicId,
+              error: error.message || 'Unknown error',
+            });
+          }
+        })
+      );
+    } catch (error) {
+      console.error('Error during Cloudinary deletion process:', error.message || 'Unknown error');
+      cloudinaryErrors.push({ error: error.message || 'Unknown error' });
+    }
+  }
+
   await land.deleteOne();
-  res.json({ message: 'Land removed' });
+  console.log('Land deleted successfully', { landId: req.params.id });
+
+  // Send a single response
+  if (cloudinaryErrors.length > 0) {
+    res.status(200).json({
+      status: 'warning',
+      message: 'Land deleted successfully, but failed to delete some images from Cloudinary',
+      errors: cloudinaryErrors,
+    });
+  } else {
+    res.status(200).json({
+      status: 'success',
+      message: 'Land and associated images removed successfully',
+    });
+  }
 });
+
+
 
 const toggleFavorite = asyncHandler(async (req, res) => {
   const land = await Land.findById(req.params.id);

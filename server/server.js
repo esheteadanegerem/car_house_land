@@ -6,7 +6,9 @@ const connectDB = require('./config/db');
 const { verifyRefreshToken, generateAccessToken } = require('./utils/token');
 const User = require('./models/User');
 const authRoutes = require("./routes/authRoute");
-
+const CarRoutes=require("./routes/carRoute");
+const LandRoutes=require("./routes/landRoute");
+const MachineRoutes=require("./routes/machineRoute")
 const app = express();
 
 // Middleware
@@ -22,6 +24,9 @@ app.get('/api/health', (req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+app.use('/api/cars', CarRoutes);
+app.use('/api/lands', LandRoutes);
+app.use('/api/machines', MachineRoutes);
 
 // Refresh token route
 app.post('/api/auth/refresh-token', async (req, res) => {
@@ -44,6 +49,7 @@ app.post('/api/auth/refresh-token', async (req, res) => {
     res.status(401).json({ status: 'error', message: 'Refresh token invalid or expired' });
   }
 });
+ 
 
 // 404 handler
 app.use((req, res) => {
