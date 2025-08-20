@@ -48,16 +48,11 @@ const dealSchema = new mongoose.Schema(
     cancelledAt: Date,
     cancellationReason: String,
 
-    // Ratings from both sides
-    rating: {
-      buyerRating: { score: { type: Number, min: 1, max: 5 }, comment: String },
-      sellerRating: { score: { type: Number, min: 1, max: 5 }, comment: String },
-    },
+    
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+  
   }
 );
 

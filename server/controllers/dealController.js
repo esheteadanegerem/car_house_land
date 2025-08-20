@@ -1,13 +1,10 @@
 const Deal = require('../models/Deal');
 const User = require('../models/User');
-const { getPaginationInfo, sanitizeSearchString } = require('../utils/helpers');
+const { getPaginationInfo, sanitizeSearchString } = require('../utils/helper');
 
-// Get all deals for admins (with full population)
 const getDeals = async (req, res) => {
   try {
     const {
-      page = 1,
-      limit = 20,
       search,
       status,
       dealType,
@@ -25,9 +22,6 @@ const getDeals = async (req, res) => {
     if (dealType) filter.dealType = dealType;
     if (itemType) filter.itemType = itemType;
 
-    const total = await Deal.countDocuments(filter);
-    const pagination = getPaginationInfo(page, limit, total);
-
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
@@ -35,15 +29,12 @@ const getDeals = async (req, res) => {
       .populate('buyer', 'fullName email phone')
       .populate('seller', 'fullName email phone')
       .populate('item')
-      .sort(sort)
-      .skip(pagination.startIndex)
-      .limit(pagination.itemsPerPage);
+      .sort(sort);
 
     res.status(200).json({
       status: 'success',
       data: {
         deals,
-        pagination,
       },
     });
   } catch (error) {
@@ -54,13 +45,9 @@ const getDeals = async (req, res) => {
     });
   }
 };
-
-// Get user's own deals (only item details populated)
 const getUserDeals = async (req, res) => {
   try {
     const {
-      page = 1,
-      limit = 20,
       search,
       status,
       dealType,
@@ -82,23 +69,17 @@ const getUserDeals = async (req, res) => {
     if (dealType) filter.dealType = dealType;
     if (itemType) filter.itemType = itemType;
 
-    const total = await Deal.countDocuments(filter);
-    const pagination = getPaginationInfo(page, limit, total);
-
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
     const deals = await Deal.find(filter)
       .populate('item')
-      .sort(sort)
-      .skip(pagination.startIndex)
-      .limit(pagination.itemsPerPage);
+      .sort(sort);
 
     res.status(200).json({
       status: 'success',
       data: {
         deals,
-        pagination,
       },
     });
   } catch (error) {

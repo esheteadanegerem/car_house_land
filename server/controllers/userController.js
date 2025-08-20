@@ -1,14 +1,10 @@
 const User = require('../models/User');
 const Deal = require('../models/Deal');
 const Cart = require('../models/Cart');
-const { getPaginationInfo, sanitizeSearchString } = require('../utils/helpers');
-
-// Get all users (with filters and pagination)
+const { getPaginationInfo, sanitizeSearchString } = require('../utils/helper');
 const getUsers = async (req, res) => {
   try {
     const {
-      page = 1,
-      limit = 20,
       search,
       role,
       isActive,
@@ -31,23 +27,17 @@ const getUsers = async (req, res) => {
     if (isActive !== undefined) filter.isActive = isActive === 'true';
     if (isVerified !== undefined) filter.isVerified = isVerified === 'true';
 
-    const total = await User.countDocuments(filter);
-    const pagination = getPaginationInfo(page, limit, total);
-
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
     const users = await User.find(filter)
       .select('-password')
-      .sort(sort)
-      .skip(pagination.startIndex)
-      .limit(pagination.itemsPerPage);
+      .sort(sort);
 
     res.status(200).json({
       status: 'success',
       data: {
         users,
-        pagination,
       },
     });
   } catch (error) {
@@ -217,6 +207,41 @@ const toggleUserStatus = async (req, res) => {
   }
 };
 
+const toggleUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found',
+      });
+    }
+
+    // Toggle role between 'admin' and 'user'
+    user.role = user.role === 'admin' ? 'user' : 'user' === user.role ? 'admin' : 'user';
+    await user.save();
+
+    res.status(200).json({
+      status: 'success',
+      message: `User role changed to ${user.role} successfully`,
+      data: {
+        user: {
+          _id: user._id,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Toggle user role error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to toggle user role',
+    });
+  }
+};
+
 // Get user statistics (for admins)
 const getUserStats = async (req, res) => {
   try {
@@ -366,4 +391,5 @@ module.exports = {
   toggleUserStatus,
   getUserStats,
   getUserDashboard,
+  toggleUserRole,
 };
