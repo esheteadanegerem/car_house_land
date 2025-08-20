@@ -1,17 +1,18 @@
 const Deal = require('../models/Deal');
 const User = require('../models/User');
-const { getPaginationInfo, sanitizeSearchString } = require('../utils/helper');
+const { sanitizeSearchString } = require('../utils/helper');
+const Car = require('../models/Car');
+const Land = require('../models/Land');
+const Property = require('../models/Property');
+const Machine = require('../models/Machine');
+const mongoose = require('mongoose');
+
 
 const getDeals = async (req, res) => {
   try {
-    const {
-      search,
-      status,
-      dealType,
-      itemType,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-    } = req.query;
+    const { search, status, dealType, itemType, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const userId = req.user.id;
+    const role = req.user.role;
 
     const filter = {};
     if (search) {
@@ -21,86 +22,53 @@ const getDeals = async (req, res) => {
     if (status) filter.status = status;
     if (dealType) filter.dealType = dealType;
     if (itemType) filter.itemType = itemType;
+    if (role === 'user') {
+      filter.$or = [{ buyer: userId }, { seller: userId }];
+    }
 
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    const deals = await Deal.find(filter)
-      .populate('buyer', 'fullName email phone')
-      .populate('seller', 'fullName email phone')
-      .populate('item')
-      .sort(sort);
+    let query = Deal.find(filter).sort(sort);
+    if (role === 'admin') {
+      query = query.populate('buyer', 'fullName email phone').populate('seller', 'fullName email phone').populate('item');
+    } else {
+      query = query.populate('item');
+    }
+
+    const deals = await query;
 
     res.status(200).json({
       status: 'success',
-      data: {
-        deals,
-      },
+      data: { deals },
     });
   } catch (error) {
-    console.error('Get deals error:', error);
+    console.error(error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch deals',
     });
   }
 };
-const getUserDeals = async (req, res) => {
-  try {
-    const {
-      search,
-      status,
-      dealType,
-      itemType,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-    } = req.query;
 
-    const userId = req.user.id;
-
-    const filter = {
-      $or: [{ buyer: userId }, { seller: userId }],
-    };
-    if (search) {
-      const searchRegex = new RegExp(sanitizeSearchString(search), 'i');
-      filter.dealId = searchRegex;
-    }
-    if (status) filter.status = status;
-    if (dealType) filter.dealType = dealType;
-    if (itemType) filter.itemType = itemType;
-
-    const sort = {};
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
-    const deals = await Deal.find(filter)
-      .populate('item')
-      .sort(sort);
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        deals,
-      },
-    });
-  } catch (error) {
-    console.error('Get user deals error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch user deals',
-    });
-  }
-};
-
-// Get single deal by ID for a specific user (only item details populated)
-const getUserDealsById = async (req, res) => {
+const getDealById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const role = req.user.role;
 
-    const deal = await Deal.findOne({
-      _id: id,
-      $or: [{ buyer: userId }, { seller: userId }],
-    }).populate('item');
+    let deal;
+    if (role === 'admin') {
+      deal = await Deal.findById(id)
+        .populate('buyer', 'fullName email phone')
+        .populate('seller', 'fullName email phone')
+        .populate('item');
+    } else {
+      deal = await Deal.findOne({
+        _id: id,
+        $or: [{ buyer: userId }, { seller: userId }],
+      }).populate('item');
+    }
 
     if (!deal) {
       return res.status(404).json({
@@ -114,81 +82,83 @@ const getUserDealsById = async (req, res) => {
       data: { deal },
     });
   } catch (error) {
-    console.error('Get user deal by ID error:', error);
+    console.error(error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch deal',
     });
   }
 };
-
-// Get single deal by ID (for admins, with full population)
-const getDealById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const deal = await Deal.findById(id)
-      .populate('buyer', 'fullName email phone')
-      .populate('seller', 'fullName email phone')
-      .populate('item');
-
-    if (!deal) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'Deal not found',
-      });
-    }
-
-    res.status(200).json({
-      status: 'success',
-      data: { deal },
-    });
-  } catch (error) {
-    console.error('Get deal by ID error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch deal',
-    });
-  }
-};
-
-// Create a new deal
 const createDeal = async (req, res) => {
   try {
-    const { itemId, itemType, dealType, buyerId, sellerId } = req.body;
+    const { item, itemType, dealType, buyer, seller } = req.body;
 
-    if (!['Car', 'Property', 'Land', 'Machine'].includes(itemType)) {
+    // Validate itemType
+    const validItemTypes = ['Car', 'Property', 'Land', 'Machine'];
+    if (!validItemTypes.includes(itemType)) {
       return res.status(400).json({
         status: 'error',
         message: 'Invalid item type',
       });
     }
 
-    const ItemModel = require(`../models/${itemType}`);
-    const item = await ItemModel.findById(itemId);
-    if (!item) {
+    // Select ItemModel based on itemType
+    let ItemModel;
+    if (itemType === 'Car') {
+      ItemModel = Car;
+    } else if (itemType === 'Property') {
+      ItemModel = Property;
+    } else if (itemType === 'Land') {
+      ItemModel = Land;
+    } else if (itemType === 'Machine') {
+      ItemModel = Machine;
+    }
+
+    // Find item
+    const itemExists = await ItemModel.findById(item);
+    if (!itemExists) {
       return res.status(404).json({
         status: 'error',
-        message: 'Item not found',
+        message: `Item not found in ${itemType} collection`,
       });
     }
 
-    const buyer = await User.findById(buyerId);
-    const seller = await User.findById(sellerId);
-    if (!buyer || !seller) {
+    // Find buyer and seller
+    const buyerExists = await User.findById(buyer);
+    const sellerExists = await User.findById(seller);
+    if (!buyerExists || !sellerExists) {
       return res.status(404).json({
         status: 'error',
         message: 'Buyer or seller not found',
       });
     }
 
-    const deal = await Deal.create({
-      buyer: buyerId,
-      seller: sellerId,
-      item: itemId,
+    // Check if a deal already exists with the same buyer, seller, item, and itemType
+    const existingDeal = await Deal.findOne({
+      buyer,
+      seller,
+      item,
       itemType,
-      dealType,
     });
+
+    if (existingDeal) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'A deal with the same buyer, seller, and item already exists',
+      });
+    }
+
+    // Create deal
+    const deal = await Deal.create({
+      buyer,
+      seller,
+      item,
+      itemType,
+      dealType, // Include dealType if it's part of your schema
+    });
+
+    // Populate deal for response
+    
 
     res.status(201).json({
       status: 'success',
@@ -200,11 +170,11 @@ const createDeal = async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to create deal',
+      error: error.message, // Include error message for debugging
     });
   }
 };
 
-// Update deal status
 const updateDealStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -241,7 +211,7 @@ const updateDealStatus = async (req, res) => {
       data: { deal },
     });
   } catch (error) {
-    console.error('Update deal status error:', error);
+    console.error(error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to update deal status',
@@ -249,7 +219,6 @@ const updateDealStatus = async (req, res) => {
   }
 };
 
-// Delete a deal
 const deleteDeal = async (req, res) => {
   try {
     const { id } = req.params;
@@ -276,7 +245,7 @@ const deleteDeal = async (req, res) => {
       message: 'Deal deleted successfully',
     });
   } catch (error) {
-    console.error('Delete deal error:', error);
+    console.error(error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to delete deal',
@@ -284,7 +253,6 @@ const deleteDeal = async (req, res) => {
   }
 };
 
-// Get deal statistics for admins
 const getDealStats = async (req, res) => {
   try {
     const stats = await Deal.aggregate([
@@ -310,7 +278,7 @@ const getDealStats = async (req, res) => {
       data: formattedStats,
     });
   } catch (error) {
-    console.error('Get deal stats error:', error);
+    console.error(error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch deal stats',
@@ -320,8 +288,6 @@ const getDealStats = async (req, res) => {
 
 module.exports = {
   getDeals,
-  getUserDeals,
-  getUserDealsById,
   getDealById,
   createDeal,
   updateDealStatus,

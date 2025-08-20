@@ -2,11 +2,7 @@ const mongoose = require('mongoose');
 
 const dealSchema = new mongoose.Schema(
   {
-    dealId: {
-      type: String,
-      unique: true,
-      required: true,
-    },
+    
 
     // Buyer and Seller
     buyer: {
@@ -32,12 +28,7 @@ const dealSchema = new mongoose.Schema(
       enum: ['Car', 'Property', 'Land', 'Machine'],
     },
 
-    // Deal Type and Status
-    dealType: {
-      type: String,
-      enum: ['sale', 'rent'],
-      required: [true, 'Deal type is required'],
-    },
+    
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected', 'cancelled', 'completed'],
@@ -55,22 +46,7 @@ const dealSchema = new mongoose.Schema(
   
   }
 );
-
-// Indexes
-dealSchema.index({ dealId: 1 });
-dealSchema.index({ buyer: 1, status: 1 });
-dealSchema.index({ seller: 1, status: 1 });
-dealSchema.index({ item: 1, itemType: 1 });
-dealSchema.index({ status: 1, createdAt: -1 });
-
-// Auto-generate dealId before saving
-dealSchema.pre('save', function (next) {
-  if (!this.dealId) {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substr(2, 5);
-    this.dealId = `DEAL-${timestamp}-${random}`.toUpperCase();
-  }
-  next();
-});
+ 
+ 
 
 module.exports = mongoose.model('Deal', dealSchema);

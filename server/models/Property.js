@@ -76,10 +76,7 @@ const propertySchema = new mongoose.Schema({
     city: { type: String, required: true },
     region: { type: String, required: true },
     neighborhood: { type: String, trim: true },
-    coordinates: {
-      latitude: Number,
-      longitude: Number
-    }
+   
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -125,7 +122,6 @@ const propertySchema = new mongoose.Schema({
 propertySchema.index({ propertyType: 1, type: 1, status: 1 });
 propertySchema.index({ price: 1 });
 propertySchema.index({ bedrooms: 1, bathrooms: 1 });
-propertySchema.index({ location: '2dsphere' });
 propertySchema.index({ createdAt: -1 });
 
 // Virtual for primary image
