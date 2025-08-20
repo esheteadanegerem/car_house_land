@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X, ShoppingCart, User, LogOut, HomeIcon, MessageSquare, Shield } from "lucide-react"
@@ -12,6 +12,10 @@ export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const { user, cart = [], handleLogout, setIsAuthModalOpen } = useApp()
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [user?.id])
 
   const regularNavItems = [
     { href: "/", label: "Home", icon: HomeIcon },
@@ -44,7 +48,7 @@ export function Navigation() {
             href={user?.role === "admin" ? "/dashboard/admin" : "/"}
             className="text-lg sm:text-xl md:text-2xl font-serif font-bold gradient-text-brand hover:scale-105 transition-all duration-300 flex-shrink-0"
           >
-            <span className="hidden sm:inline">MassGebeya PLC</span>
+            <span className="hidden sm:inline">MasGebeya PLC</span>
             <span className="sm:hidden">MassGebeya</span>
           </Link>
 

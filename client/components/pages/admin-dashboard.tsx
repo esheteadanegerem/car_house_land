@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState } from "react"
 import { useApp } from "@/context/app-context"
@@ -67,11 +67,31 @@ import {
   Download,
   RefreshCw,
 } from "lucide-react"
-import { cars, houses, lands, machines } from "@/data/sample-data"
 import type { Deal } from "@/types"
 
 export function AdminDashboard() {
-  const { user, deals, updateDealStatus, getPendingDealsCount } = useApp()
+  const {
+    user,
+    deals,
+    updateDealStatus,
+    getPendingDealsCount,
+    cars,
+    houses,
+    machines,
+    lands,
+    addCar,
+    updateCar,
+    deleteCar,
+    addHouse,
+    updateHouse,
+    deleteHouse,
+    addMachine,
+    updateMachine,
+    deleteMachine,
+    addLand,
+    updateLand,
+    deleteLand,
+  } = useApp()
   const [activeTab, setActiveTab] = useState("overview")
   const [selectedCategory, setSelectedCategory] = useState("cars")
   const [editingItem, setEditingItem] = useState<any>(null)
@@ -84,6 +104,62 @@ export function AdminDashboard() {
   const [deletingItem, setDeletingItem] = useState<any>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
+
+  // const [carsData, setCarsData] = React.useState(CARS_DATA)
+  // const [housesData, setHousesData] = React.useState(HOUSES_DATA)
+  // const [landsData, setHousesData] = React.useState(LANDS_DATA)
+  // const [machinesData, setMachinesData] = React.useState(MACHINES_DATA)
+
+  const [users, setUsers] = React.useState([
+    {
+      id: "1",
+      name: "Dawit Tesfaye",
+      email: "dawit.tesfaye@gmail.com",
+      role: "user",
+      status: "active",
+      joinedDate: "2024-01-15",
+      lastActive: "2024-01-20",
+      totalDeals: 5,
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "2",
+      name: "Meron Haile",
+      email: "meron.haile@yahoo.com",
+      role: "user",
+      status: "active",
+      joinedDate: "2024-02-10",
+      lastActive: "2024-01-19",
+      totalDeals: 3,
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "3",
+      name: "Alemayehu Bekele",
+      email: "alemayehu.admin@ethiopiapropertyauto.com",
+      role: "admin",
+      status: "active",
+      joinedDate: "2023-12-01",
+      lastActive: "2024-01-20",
+      totalDeals: 0,
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "4",
+      name: "Tigist Alemayehu",
+      email: "tigist.alemayehu@outlook.com",
+      role: "user",
+      status: "inactive",
+      joinedDate: "2024-01-05",
+      lastActive: "2024-01-10",
+      totalDeals: 1,
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+  ])
+  const [editingUser, setEditingUser] = useState<any>(null)
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false)
+  const [deletingUser, setDeletingUser] = useState<any>(null)
+  const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
 
   if (!user || user.role !== "admin") {
     return (
@@ -171,8 +247,127 @@ export function AdminDashboard() {
       case "machines":
         return machines
       default:
-        return cars
+        return []
     }
+  }
+
+  const handleDeleteItem = (item: any) => {
+    switch (selectedCategory) {
+      case "cars":
+        deleteCar(item.id)
+        break
+      case "houses":
+        deleteHouse(item.id)
+        break
+      case "lands":
+        deleteLand(item.id)
+        break
+      case "machines":
+        deleteMachine(item.id)
+        break
+    }
+  }
+
+  const handleSaveItem = (itemData: any) => {
+    const itemWithDefaults = {
+      ...itemData,
+      images: uploadedImages,
+      id: itemData.id || `${selectedCategory.slice(0, -1)}-${Date.now()}`,
+      createdAt: itemData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      rating: itemData.rating || 4.5,
+      reviews: itemData.reviews || 0,
+      status: itemData.status || "available",
+      sellerName: itemData.sellerName || "Admin Added",
+      sellerPhone: itemData.sellerPhone || "+251 911 000 000",
+      sellerEmail: itemData.sellerEmail || "admin@example.com",
+      sellerId: itemData.sellerId || "admin-1",
+      listingType: itemData.listingType || "sale",
+    }
+
+    if (itemData.id && getCurrentData().find((item: any) => item.id === itemData.id)) {
+      // Update existing item
+      switch (selectedCategory) {
+        case "cars":
+          updateCar(itemData.id, itemWithDefaults)
+          break
+        case "houses":
+          updateHouse(itemData.id, itemWithDefaults)
+          break
+        case "lands":
+          updateLand(itemData.id, itemWithDefaults)
+          break
+        case "machines":
+          updateMachine(itemData.id, itemWithDefaults)
+          break
+      }
+    } else {
+      // Add new item
+      switch (selectedCategory) {
+        case "cars":
+          addCar(itemWithDefaults)
+          break
+        case "houses":
+          addHouse(itemWithDefaults)
+          break
+        case "lands":
+          addLand(itemWithDefaults)
+          break
+        case "machines":
+          addMachine(itemWithDefaults)
+          break
+      }
+    }
+  }
+
+  const getCurrentDataSetter = () => {
+    return () => {}
+  }
+
+  const handleEditUser = (user: any) => {
+    setEditingUser(user)
+    setIsUserDialogOpen(true)
+  }
+
+  const handleDeleteUser = (user: any) => {
+    setDeletingUser(user)
+    setIsDeleteUserDialogOpen(true)
+  }
+
+  const confirmDeleteUser = () => {
+    if (!deletingUser) return
+
+    setUsers((prevUsers) => prevUsers.filter((u) => u.id !== deletingUser.id))
+    setIsDeleteUserDialogOpen(false)
+    setDeletingUser(null)
+  }
+
+  const handleSaveUser = () => {
+    if (!editingUser) return
+
+    const userWithDefaults = {
+      ...editingUser,
+      id: editingUser.id || `user-${Date.now()}`,
+      joinedDate: editingUser.joinedDate || new Date().toISOString().split("T")[0],
+      lastActive: editingUser.lastActive || new Date().toISOString().split("T")[0],
+      totalDeals: editingUser.totalDeals || 0,
+      avatar: editingUser.avatar || "/placeholder.svg?height=40&width=40",
+    }
+
+    if (editingUser.id && users.find((u) => u.id === editingUser.id)) {
+      setUsers((prevUsers) => prevUsers.map((u) => (u.id === editingUser.id ? userWithDefaults : u)))
+    } else {
+      setUsers((prevUsers) => [...prevUsers, userWithDefaults])
+    }
+
+    setIsUserDialogOpen(false)
+    setEditingUser(null)
+  }
+
+  const toggleUserStatus = (userId: string) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((u) => (u.id === userId ? { ...u, status: u.status === "active" ? "inactive" : "active" } : u)),
+    )
   }
 
   const handleView = (item: any) => {
@@ -192,19 +387,22 @@ export function AdminDashboard() {
   }
 
   const confirmDelete = () => {
-    console.log(`Deleting item with id: ${deletingItem.id}`)
-    setDataVersion((prev) => prev + 1)
+    if (!deletingItem) return
+
+    handleDeleteItem(deletingItem)
+
     setIsDeleteDialogOpen(false)
     setDeletingItem(null)
   }
 
   const handleSave = () => {
-    const itemWithImages = { ...editingItem, images: uploadedImages }
-    console.log("Saving item:", itemWithImages)
+    if (!editingItem) return
+
+    handleSaveItem(editingItem)
+
     setIsDialogOpen(false)
     setEditingItem(null)
     setUploadedImages([])
-    setDataVersion((prev) => prev + 1)
   }
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -387,7 +585,7 @@ export function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-brand-orange transition-colors">
-                    ${totalRevenue.toLocaleString()}
+                    ETB {(totalRevenue || 0).toLocaleString()}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Revenue</div>
                   <div className="flex items-center mt-2 text-green-600">
@@ -622,7 +820,7 @@ export function AdminDashboard() {
                         </div>
                         <div className="text-right flex-shrink-0 ml-2">
                           <div className="font-semibold text-brand-blue text-xs sm:text-sm">
-                            ${item.revenue.toLocaleString()}
+                            ETB {(item.revenue || 0).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -841,10 +1039,351 @@ export function AdminDashboard() {
                                 <SelectContent>
                                   <SelectItem value="sale">For Sale</SelectItem>
                                   <SelectItem value="rent">For Rent</SelectItem>
+                                  {(selectedCategory === "lands" || selectedCategory === "machines") && (
+                                    <SelectItem value="lease">For Lease</SelectItem>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </div>
                           </div>
+
+                          {selectedCategory === "machines" && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Brand</label>
+                                  <Input
+                                    value={editingItem?.brand || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, brand: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="e.g., Caterpillar, John Deere"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Model</label>
+                                  <Input
+                                    value={editingItem?.model || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, model: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="e.g., 320D, 850K"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Year</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.year || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, year: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="2020"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Power</label>
+                                  <Input
+                                    value={editingItem?.power || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, power: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="122 HP"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Weight (lbs)</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.weight || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, weight: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="20000"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Capacity</label>
+                                  <Input
+                                    value={editingItem?.capacity || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, capacity: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="1.2 cubic meters"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Hours Used</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.hoursUsed || ""}
+                                    onChange={(e) =>
+                                      setEditingItem({ ...editingItem, hoursUsed: Number(e.target.value) })
+                                    }
+                                    className="text-sm"
+                                    placeholder="2500"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Machine Type</label>
+                                  <Input
+                                    value={editingItem?.machineType || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, machineType: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="excavator, bulldozer, crane"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Condition</label>
+                                  <Select
+                                    value={editingItem?.condition || "used"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new">New</SelectItem>
+                                      <SelectItem value="used">Used</SelectItem>
+                                      <SelectItem value="refurbished">Refurbished</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Warranty</label>
+                                  <Input
+                                    value={editingItem?.warranty || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, warranty: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="6 months, 2 years"
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {selectedCategory === "cars" && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Make</label>
+                                  <Input
+                                    value={editingItem?.make || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, make: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Toyota, BMW, Mercedes"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Model</label>
+                                  <Input
+                                    value={editingItem?.model || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, model: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Camry, X5, C-Class"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Year</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.year || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, year: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="2020"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Mileage</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.mileage || ""}
+                                    onChange={(e) =>
+                                      setEditingItem({ ...editingItem, mileage: Number(e.target.value) })
+                                    }
+                                    className="text-sm"
+                                    placeholder="50000"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Condition</label>
+                                  <Select
+                                    value={editingItem?.condition || "used"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new">New</SelectItem>
+                                      <SelectItem value="used">Used</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Fuel Type</label>
+                                  <Input
+                                    value={editingItem?.fuelType || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, fuelType: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Gasoline, Diesel, Hybrid"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Transmission</label>
+                                  <Input
+                                    value={editingItem?.transmission || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, transmission: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Automatic, Manual"
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {selectedCategory === "houses" && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Bedrooms</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.bedrooms || ""}
+                                    onChange={(e) =>
+                                      setEditingItem({ ...editingItem, bedrooms: Number(e.target.value) })
+                                    }
+                                    className="text-sm"
+                                    placeholder="3"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Bathrooms</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.bathrooms || ""}
+                                    onChange={(e) =>
+                                      setEditingItem({ ...editingItem, bathrooms: Number(e.target.value) })
+                                    }
+                                    className="text-sm"
+                                    placeholder="2"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Size (sq ft)</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.size || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, size: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="1500"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Property Type</label>
+                                  <Input
+                                    value={editingItem?.propertyType || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, propertyType: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="House, Apartment, Condo"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Year Built</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.yearBuilt || ""}
+                                    onChange={(e) =>
+                                      setEditingItem({ ...editingItem, yearBuilt: Number(e.target.value) })
+                                    }
+                                    className="text-sm"
+                                    placeholder="2015"
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {selectedCategory === "lands" && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Size (acres)</label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.size || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, size: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="5.5"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Zoning</label>
+                                  <Input
+                                    value={editingItem?.zoning || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, zoning: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Residential, Commercial, Agricultural"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Soil Type</label>
+                                  <Input
+                                    value={editingItem?.soilType || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, soilType: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Clay, Sandy, Loam"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs sm:text-sm font-medium">Development Potential</label>
+                                  <Input
+                                    value={editingItem?.developmentPotential || ""}
+                                    onChange={(e) =>
+                                      setEditingItem({ ...editingItem, developmentPotential: e.target.value })
+                                    }
+                                    className="text-sm"
+                                    placeholder="High, Medium, Low"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="waterAccess"
+                                    checked={editingItem?.waterAccess || false}
+                                    onChange={(e) => setEditingItem({ ...editingItem, waterAccess: e.target.checked })}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor="waterAccess" className="text-xs sm:text-sm font-medium">
+                                    Water Access
+                                  </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id="roadAccess"
+                                    checked={editingItem?.roadAccess || false}
+                                    onChange={(e) => setEditingItem({ ...editingItem, roadAccess: e.target.checked })}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor="roadAccess" className="text-xs sm:text-sm font-medium">
+                                    Road Access
+                                  </label>
+                                </div>
+                              </div>
+                            </>
+                          )}
+
                           <div className="space-y-2">
                             <label className="text-xs sm:text-sm font-medium">Description</label>
                             <Textarea
@@ -964,7 +1503,7 @@ export function AdminDashboard() {
                       .map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium text-xs sm:text-sm">{item.title}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">${item.price.toLocaleString()}</TableCell>
+                          <TableCell className="text-xs sm:text-sm">ETB {(item.price || 0).toLocaleString()}</TableCell>
                           <TableCell className="text-xs sm:text-sm">{item.location}</TableCell>
                           <TableCell className="text-xs sm:text-sm">
                             <Badge variant={item.listingType === "sale" ? "default" : "secondary"}>
@@ -1009,44 +1548,175 @@ export function AdminDashboard() {
 
           <TabsContent value="users" className="space-y-4 sm:space-y-6">
             <Card>
-              <CardHeader className="pb-2 sm:pb-4">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-4">
                 <CardTitle className="flex items-center text-sm sm:text-base">
                   <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
                   User Management
                 </CardTitle>
+                <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
+                      onClick={() => setEditingUser(null)}
+                    >
+                      <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                      Add User
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-xs sm:max-w-md mx-4">
+                    <DialogHeader>
+                      <DialogTitle className="text-sm sm:text-base">
+                        {editingUser ? "Edit User" : "Add New User"}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-xs sm:text-sm font-medium">Name</label>
+                        <Input
+                          value={editingUser?.name || ""}
+                          onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                          className="text-sm"
+                          placeholder="Enter full name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs sm:text-sm font-medium">Email</label>
+                        <Input
+                          type="email"
+                          value={editingUser?.email || ""}
+                          onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                          className="text-sm"
+                          placeholder="Enter email address"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs sm:text-sm font-medium">Role</label>
+                        <Select
+                          value={editingUser?.role || "user"}
+                          onChange={(value) => setEditingUser({ ...editingUser, role: value })}
+                        >
+                          <SelectTrigger className="text-xs sm:text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs sm:text-sm font-medium">Status</label>
+                        <Select
+                          value={editingUser?.status || "active"}
+                          onChange={(value) => setEditingUser({ ...editingUser, status: value })}
+                        >
+                          <SelectTrigger className="text-xs sm:text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-2 mt-6">
+                      <Button
+                        variant="outline"
+                        className="text-xs sm:text-sm bg-transparent"
+                        onClick={() => setIsUserDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSaveUser}
+                        className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs sm:text-sm">Name</TableHead>
+                      <TableHead className="text-xs sm:text-sm">User</TableHead>
                       <TableHead className="text-xs sm:text-sm">Email</TableHead>
                       <TableHead className="text-xs sm:text-sm">Role</TableHead>
                       <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Deals</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell className="text-xs sm:text-sm">John Doe</TableCell>
-                      <TableCell className="text-xs sm:text-sm">john@example.com</TableCell>
-                      <TableCell className="text-xs sm:text-sm">
-                        <Badge>User</Badge>
-                      </TableCell>
-                      <TableCell className="text-xs sm:text-sm">
-                        <Badge variant="secondary">Active</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline" className="text-xs sm:text-sm bg-transparent">
-                            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-xs sm:text-sm bg-transparent">
-                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    {users.map((userData) => (
+                      <TableRow key={userData.id}>
+                        <TableCell className="text-xs sm:text-sm">
+                          <div className="flex items-center space-x-3">
+                            <img
+                              src={userData.avatar || "/placeholder.svg"}
+                              alt={userData.name}
+                              className="w-8 h-8 rounded-full"
+                            />
+                            <div>
+                              <div className="font-medium">{userData.name}</div>
+                              <div className="text-xs text-gray-500">
+                                Joined {new Date(userData.joinedDate).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">{userData.email}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <Badge variant={userData.role === "admin" ? "default" : "secondary"}>{userData.role}</Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <Badge
+                            variant={userData.status === "active" ? "default" : "secondary"}
+                            className={
+                              userData.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                            }
+                          >
+                            {userData.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">{userData.totalDeals}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs sm:text-sm bg-transparent"
+                              onClick={() => handleEditUser(userData)}
+                            >
+                              <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className={`text-xs sm:text-sm bg-transparent ${
+                                userData.status === "active"
+                                  ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                  : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                              }`}
+                              onClick={() => toggleUserStatus(userData.id)}
+                            >
+                              {userData.status === "active" ? "Deactivate" : "Activate"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs sm:text-sm bg-transparent text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDeleteUser(userData)}
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -1088,7 +1758,9 @@ export function AdminDashboard() {
                               </div>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <p className="font-semibold text-xs sm:text-sm">${deal.originalPrice.toLocaleString()}</p>
+                              <p className="font-semibold text-xs sm:text-sm">
+                                ETB {(deal.originalPrice || 0).toLocaleString()}
+                              </p>
                             </div>
                             <div className="flex space-x-2 flex-shrink-0">
                               <Button
@@ -1200,7 +1872,9 @@ export function AdminDashboard() {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-gray-600">Price:</span>
-                        <span className="text-xl font-bold text-brand-blue">${viewingItem.price.toLocaleString()}</span>
+                        <span className="text-xl font-bold text-brand-blue">
+                          ETB {(viewingItem.price || 0).toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Location:</span>
@@ -1347,7 +2021,7 @@ export function AdminDashboard() {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Price:</span>
-                        <span className="font-semibold">${selectedDeal.originalPrice.toLocaleString()}</span>
+                        <span className="font-semibold">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Location:</span>
@@ -1561,6 +2235,55 @@ export function AdminDashboard() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+          <DialogContent className="max-w-xs sm:max-w-md mx-4">
+            {deletingUser && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center space-x-2 text-red-600 text-sm sm:text-base">
+                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Delete User</span>
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-3 sm:space-y-4">
+                  <p className="text-gray-600 text-sm">
+                    Are you sure you want to delete user <strong>"{deletingUser.name}"</strong>? This action cannot be
+                    undone.
+                  </p>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
+                      <span className="text-xs sm:text-sm text-red-800 font-medium">Warning</span>
+                    </div>
+                    <p className="text-xxs sm:text-xs text-red-700 mt-1">
+                      This will permanently remove the user account and all associated data.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
+                  <Button
+                    variant="outline"
+                    className="text-xs sm:text-sm bg-transparent"
+                    onClick={() => setIsDeleteUserDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={confirmDeleteUser}
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm"
+                  >
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    Delete User
+                  </Button>
                 </div>
               </>
             )}

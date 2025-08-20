@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
-import { CARS_DATA } from "@/lib/data/cars"
 
 interface CarDetailProps {
   carId: string
@@ -15,11 +14,12 @@ interface CarDetailProps {
 
 export function CarDetail({ carId }: CarDetailProps) {
   const router = useRouter()
-  const { addToCart, contactDealer, user, setIsAuthModalOpen, soldItems } = useApp()
+  const { addToCart, user, setIsAuthModalOpen, soldItems, cars, createDeal } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
 
-  const car = CARS_DATA.find((c) => c.id === carId)
+  const car = cars?.find((c) => c.id === carId || c.id === String(carId) || String(c.id) === carId)
+
   const isSold = soldItems.has(carId)
 
   if (!car) {
@@ -27,6 +27,7 @@ export function CarDetail({ carId }: CarDetailProps) {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <h1 className="text-xl sm:text-2xl font-bold mb-4">Car Not Found</h1>
+          <p className="text-muted-foreground mb-4">The requested car could not be found.</p>
           <Button onClick={() => router.push("/cars")} className="text-sm sm:text-base">
             Back to Cars
           </Button>
@@ -36,15 +37,25 @@ export function CarDetail({ carId }: CarDetailProps) {
   }
 
   const specifications = [
-    { label: "Make", value: car.make },
-    { label: "Model", value: car.model },
-    { label: "Year", value: car.year.toString() },
-    { label: "Mileage", value: `${car.mileage.toLocaleString()} km` },
-    { label: "Fuel Type", value: car.fuelType },
-    { label: "Transmission", value: car.transmission },
-    { label: "Condition", value: car.condition },
-    { label: "Location", value: car.location },
+    { label: "Make", value: car.make || "N/A" },
+    { label: "Model", value: car.model || "N/A" },
+    { label: "Year", value: car.year?.toString() || "N/A" },
+    { label: "Mileage", value: `${(car.mileage || 0).toLocaleString()} km` },
+    { label: "Fuel Type", value: car.fuelType || "N/A" },
+    { label: "Transmission", value: car.transmission || "N/A" },
+    { label: "Condition", value: car.condition || "N/A" },
+    { label: "Location", value: car.location || "N/A" },
   ]
+
+  const contactDealer = (car: any) => {
+    if (!user) {
+      setIsAuthModalOpen(true)
+      return
+    }
+
+    const message = `I'm interested in the ${car.make} ${car.model} (${car.year}) listed for ETB ${car.price?.toLocaleString()}. Please contact me with more details.`
+    createDeal("car", car, message)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
@@ -59,7 +70,7 @@ export function CarDetail({ carId }: CarDetailProps) {
           <div className="space-y-3 sm:space-y-4">
             <div className="relative">
               <img
-                src={car.images[selectedImageIndex] || "/placeholder.svg"}
+                src={car.images?.[selectedImageIndex] || "/placeholder.svg"}
                 alt={`${car.make} ${car.model}`}
                 className="w-full h-64 sm:h-80 md:h-96 object-cover rounded-lg"
               />
@@ -78,7 +89,7 @@ export function CarDetail({ carId }: CarDetailProps) {
                   variant={car.condition === "new" ? "default" : "secondary"}
                   className="shadow-md text-xs sm:text-sm"
                 >
-                  {car.condition}
+                  {car.condition || "Used"}
                 </Badge>
               </div>
               <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex gap-1 sm:gap-2">
@@ -97,7 +108,7 @@ export function CarDetail({ carId }: CarDetailProps) {
             </div>
 
             <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2">
-              {car.images.map((image, index) => (
+              {(car.images || []).map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
@@ -124,19 +135,19 @@ export function CarDetail({ carId }: CarDetailProps) {
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-muted-foreground mb-3 sm:mb-4">
                 <div className="flex items-center">
                   <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 fill-current text-yellow-400" />
-                  <span className="text-sm sm:text-base">{car.rating}</span>
+                  <span className="text-sm sm:text-base">{car.rating || "N/A"}</span>
                 </div>
                 <div className="flex items-center">
                   <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="text-sm sm:text-base">{car.location}</span>
+                  <span className="text-sm sm:text-base">{car.location || "N/A"}</span>
                 </div>
                 <div className="flex items-center">
                   <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="text-sm sm:text-base">{car.year}</span>
+                  <span className="text-sm sm:text-base">{car.year || "N/A"}</span>
                 </div>
               </div>
               <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-3 sm:mb-4">
-                ETB {car.price.toLocaleString()}
+                ETB {(car.price || 0).toLocaleString()}
               </div>
             </div>
 
@@ -160,7 +171,7 @@ export function CarDetail({ carId }: CarDetailProps) {
                   size="lg"
                   variant="outline"
                   className="flex-1 text-sm sm:text-base py-2.5 sm:py-3 bg-transparent"
-                  onClick={() => (user ? contactDealer(car) : setIsAuthModalOpen(true))}
+                  onClick={() => contactDealer(car)}
                 >
                   Contact Dealer
                 </Button>
@@ -190,7 +201,9 @@ export function CarDetail({ carId }: CarDetailProps) {
                 <CardTitle className="text-base sm:text-lg">Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">{car.description}</p>
+                <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
+                  {car.description || "No description available."}
+                </p>
               </CardContent>
             </Card>
 
@@ -202,7 +215,9 @@ export function CarDetail({ carId }: CarDetailProps) {
               <CardContent>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                   <div>
-                    <h4 className="font-semibold text-sm sm:text-base">{car.dealer}</h4>
+                    <h4 className="font-semibold text-sm sm:text-base">
+                      {car.dealer || car.sellerName || "Unknown Dealer"}
+                    </h4>
                     <p className="text-xs sm:text-sm text-muted-foreground">Authorized Dealer</p>
                   </div>
                   {!isSold && user && user.role !== "admin" && (

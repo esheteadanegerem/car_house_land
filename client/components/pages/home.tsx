@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
-import { CARS_DATA } from "@/lib/data/cars"
-import { houses, lands, machines } from "@/lib/data"
 
 export function Home() {
-  const { user, setIsAuthModalOpen } = useApp()
+  const { user, setIsAuthModalOpen, cars, houses, lands, machines } = useApp()
 
   const stats = [
     { label: "ንቁ ዝርዝሮች", value: "2,500+", icon: Car, color: "brand-green" },
@@ -40,54 +38,55 @@ export function Home() {
   ]
 
   const featuredListings = [
-    ...CARS_DATA.filter((car) => car.featured)
+    ...(cars || [])
+      .filter((car) => car.featured)
       .slice(0, 2)
       .map((car) => ({
-        id: car.id,
+        id: `car-${car.id}`,
         title: car.title,
-        price: car.price,
-        image: car.images[0],
+        price: car.price || 0,
+        image: car.images?.[0] || "/placeholder.svg",
         status: car.condition === "used" ? "used" : "new",
-        location: car.location,
+        location: car.location || "",
         category: "car",
         href: `/cars/${car.id}`,
       })),
-    ...houses
+    ...(houses || [])
       .filter((house) => house.featured)
       .slice(0, 2)
       .map((house) => ({
-        id: house.id,
+        id: `house-${house.id}`,
         title: house.title,
-        price: house.price,
-        image: house.images[0],
+        price: house.price || 0,
+        image: house.images?.[0] || "/placeholder.svg",
         status: house.status,
-        location: house.location,
+        location: house.location || "",
         category: "house",
         href: `/houses/${house.id}`,
       })),
-    ...lands
+    ...(lands || [])
       .filter((land) => land.featured)
       .slice(0, 1)
       .map((land) => ({
-        id: land.id,
+        id: `land-${land.id}`,
         title: land.title,
-        price: land.price,
-        image: land.images[0],
+        price: land.price || 0,
+        image: land.images?.[0] || "/placeholder.svg",
         status: land.status,
-        location: land.location,
+        location: land.location || "",
         category: "land",
         href: `/lands/${land.id}`,
       })),
-    ...machines
+    ...(machines || [])
       .filter((machine) => machine.featured)
       .slice(0, 1)
       .map((machine) => ({
-        id: machine.id,
+        id: `machine-${machine.id}`,
         title: machine.title,
-        price: machine.price,
-        image: machine.images[0],
+        price: machine.price || 0,
+        image: machine.images?.[0] || "/placeholder.svg",
         status: machine.condition,
-        location: machine.location,
+        location: machine.location || "",
         category: "machine",
         href: `/machines/${machine.id}`,
       })),
@@ -285,7 +284,7 @@ export function Home() {
                       </h3>
                       <div className="flex items-center justify-between">
                         <span className={`text-base sm:text-lg md:text-xl font-bold text-${categoryColor}`}>
-                          {listing.price.toLocaleString()} ብር
+                          {(listing.price || 0).toLocaleString()} ብር
                         </span>
                       </div>
                       <p className="text-gray-500 text-xs sm:text-sm line-clamp-1">{listing.location}</p>

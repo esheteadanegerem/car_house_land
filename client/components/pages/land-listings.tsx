@@ -8,10 +8,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ItemCard } from "@/components/ui/item-card"
 import { Search, Filter, Grid, List } from "lucide-react"
-import { lands } from "@/lib/data"
+import { useApp } from "@/context/app-context"
 import type { Land } from "@/types"
 
 export function LandListings() {
+  const { lands } = useApp()
   const [filteredLands, setFilteredLands] = React.useState<Land[]>(lands)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [showMobileFilters, setShowMobileFilters] = React.useState(false)
@@ -80,7 +81,7 @@ export function LandListings() {
     }
 
     setFilteredLands(filtered)
-  }, [searchQuery, filters])
+  }, [searchQuery, filters, lands])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))

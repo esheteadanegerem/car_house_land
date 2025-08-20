@@ -8,10 +8,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ItemCard } from "@/components/ui/item-card"
 import { Search, Grid3X3, List, Filter } from "lucide-react"
-import { houses } from "@/lib/data"
+// import { houses } from "@/lib/data"
 import type { House } from "@/types"
+import { useApp } from "@/context/app-context"
 
 export function HouseListings() {
+  const { houses } = useApp()
   const [filteredHouses, setFilteredHouses] = React.useState<House[]>(houses)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
@@ -33,9 +35,9 @@ export function HouseListings() {
     if (searchQuery) {
       filtered = filtered.filter(
         (house) =>
-          house.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          house.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          house.description.toLowerCase().includes(searchQuery.toLowerCase()),
+          (house.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (house.location?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (house.description?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
       )
     }
 
@@ -91,7 +93,7 @@ export function HouseListings() {
     }
 
     setFilteredHouses(filtered)
-  }, [searchQuery, filters])
+  }, [searchQuery, filters, houses])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
@@ -212,10 +214,10 @@ export function HouseListings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-500000">Under 500K</SelectItem>
-                <SelectItem value="500000-1000000">500K - 1M</SelectItem>
-                <SelectItem value="1000000-2000000">1M - 2M</SelectItem>
-                <SelectItem value="2000000-999999999">Over 2M</SelectItem>
+                <SelectItem value="0-500000">Under $500K</SelectItem>
+                <SelectItem value="500000-1000000">$500K - $1M</SelectItem>
+                <SelectItem value="1000000-2000000">$1M - $2M</SelectItem>
+                <SelectItem value="2000000-999999999">Over $2M</SelectItem>
               </SelectContent>
             </Select>
 
