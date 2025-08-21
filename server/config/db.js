@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || "mongodb://localhost:27017/landDB", {
+    await mongoose.connect(process.env.MONGO_URI || "mongodb+srv://temesgenmarie:123456Tom@cluster0.mxzpylr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
       
       serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
       maxPoolSize: 10, // Maximum number of sockets in the connection pool

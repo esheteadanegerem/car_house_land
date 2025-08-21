@@ -49,7 +49,7 @@ const {
     // Send email
     setImmediate(async () => {
       try {
-        const emailContent = emailTemplates.verificationCode(verificationCode);
+        const emailContent = emailTemplates.verificationCode(fullName,verificationCode);
         await sendEmail({
           email: user.email,
           ...emailContent
