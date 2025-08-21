@@ -14,6 +14,8 @@ import {
   ShoppingCart,
   MessageCircle,
   Heart,
+  Loader2,
+  RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +25,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useApp } from "@/context/app-context"
 
 export function CarListings() {
-  const { addToCart, user, setIsAuthModalOpen, soldItems, createDeal, toggleFavorite, isFavorite, cars } = useApp()
+  const {
+    addToCart,
+    user,
+    setIsAuthModalOpen,
+    soldItems,
+    createDeal,
+    toggleFavorite,
+    isFavorite,
+    cars,
+    carsLoading,
+    refreshCars,
+  } = useApp()
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showMobileFilters, setShowMobileFilters] = useState(false)
@@ -106,6 +119,15 @@ export function CarListings() {
               Filters
             </h3>
             <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshCars}
+                disabled={carsLoading}
+                className="bg-transparent"
+              >
+                {carsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -241,161 +263,172 @@ export function CarListings() {
         </div>
 
         {/* Results */}
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <p className="text-muted-foreground">
-            Showing {filteredCars.length} of {cars.length} cars
+            {carsLoading ? "Loading cars..." : `Showing ${filteredCars.length} of ${cars.length} cars`}
           </p>
         </div>
 
-        {/* Car Listings */}
-        <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-          {filteredCars.map((car) => {
-            const isSold = soldItems.has(car.id)
-
-            return (
-              <Card
-                key={car.id}
-                className={`overflow-hidden hover:shadow-lg transition-all duration-300 group ${isSold ? "opacity-60" : ""}`}
-                onClick={() => (window.location.href = `/cars/${car.id}`)}
-              >
-                <div className="relative">
-                  <img
-                    src={car.images[0] || "/placeholder.svg"}
-                    alt={car.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <Badge variant={car.listingType === "sale" ? "default" : "secondary"} className="shadow-md">
-                      {car.listingType === "sale" ? "For Sale" : "For Rent"}
-                    </Badge>
-                    <Badge variant={car.condition === "new" ? "default" : "secondary"} className="shadow-md">
-                      {car.condition}
-                    </Badge>
-                    {isSold && (
-                      <Badge variant="destructive" className="shadow-md">
-                        SOLD
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="absolute top-3 right-3">
-                    <div className="flex items-center bg-black/70 text-white px-2 py-1 rounded text-sm">
-                      <Star className="w-3 h-3 mr-1 fill-current" />
-                      {car.rating}
-                    </div>
-                  </div>
-                </div>
-
-                <CardContent className="p-6">
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-lg font-semibold">{car.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {car.year} • {car.sellerName}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-blue-600">
-                        ETB {(car.price || 0).toLocaleString()}
-                        {car.listingType === "rent" && (
-                          <span className="text-sm font-normal text-muted-foreground">
-                            {(car.price || 0) <= 5000 ? "/day" : "/month"}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <div className="flex items-center">
-                        <Settings className="w-4 h-4 mr-1" />
-                        {(car.mileage || 0).toLocaleString()} km
-                      </div>
-                      <div className="flex items-center">
-                        <Fuel className="w-4 h-4 mr-1" />
-                        {car.fuelType}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {car.location}
-                    </div>
-
-                    <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
-                      {!isSold && (
-                        <>
-                          <Button
-                            onClick={() => addToCart("car", car)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={!user}
-                          >
-                            {car.listingType === "rent" ? (
-                              <>
-                                <Calendar className="w-4 h-4 mr-2" />
-                                Book Now
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingCart className="w-4 h-4 mr-2" />
-                                Add to Cart
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => {
-                              if (!user) {
-                                setIsAuthModalOpen(true)
-                                return
-                              }
-                              toggleFavorite("car", car)
-                            }}
-                            className={`shrink-0 ${isFavorite(car.id) ? "text-red-500 border-red-500" : ""}`}
-                          >
-                            <Heart className={`w-4 h-4 ${isFavorite(car.id) ? "fill-current" : ""}`} />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleContactClick(car)}
-                            className="shrink-0"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-
-        {filteredCars.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">No cars found matching your criteria.</p>
-            <Button
-              variant="outline"
-              className="mt-4 bg-transparent"
-              onClick={() => {
-                setSearchTerm("")
-                setFilters({
-                  condition: "all",
-                  make: "all",
-                  priceRange: "all",
-                  year: "all",
-                  fuelType: "all",
-                  transmission: "all",
-                  location: "",
-                  listingType: "all",
-                })
-              }}
-            >
-              Clear Filters
-            </Button>
+        {carsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading cars from API...</p>
+            </div>
           </div>
+        ) : (
+          <>
+            {/* Car Listings */}
+            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+              {filteredCars.map((car) => {
+                const isSold = soldItems.has(car.id)
+
+                return (
+                  <Card
+                    key={car.id}
+                    className={`overflow-hidden hover:shadow-lg transition-all duration-300 group ${isSold ? "opacity-60" : ""}`}
+                    onClick={() => (window.location.href = `/cars/${car.id}`)}
+                  >
+                    <div className="relative">
+                      <img
+                        src={car.images[0] || "/placeholder.svg"}
+                        alt={car.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 left-3 flex gap-2">
+                        <Badge variant={car.listingType === "sale" ? "default" : "secondary"} className="shadow-md">
+                          {car.listingType === "sale" ? "For Sale" : "For Rent"}
+                        </Badge>
+                        <Badge variant={car.condition === "new" ? "default" : "secondary"} className="shadow-md">
+                          {car.condition}
+                        </Badge>
+                        {isSold && (
+                          <Badge variant="destructive" className="shadow-md">
+                            SOLD
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="absolute top-3 right-3">
+                        <div className="flex items-center bg-black/70 text-white px-2 py-1 rounded text-sm">
+                          <Star className="w-3 h-3 mr-1 fill-current" />
+                          {car.rating}
+                        </div>
+                      </div>
+                    </div>
+
+                    <CardContent className="p-6">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="text-lg font-semibold">{car.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {car.year} • {car.sellerName}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-2xl font-bold text-blue-600">
+                            ETB {(car.price || 0).toLocaleString()}
+                            {car.listingType === "rent" && (
+                              <span className="text-sm font-normal text-muted-foreground">
+                                {(car.price || 0) <= 5000 ? "/day" : "/month"}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <Settings className="w-4 h-4 mr-1" />
+                            {(car.mileage || 0).toLocaleString()} km
+                          </div>
+                          <div className="flex items-center">
+                            <Fuel className="w-4 h-4 mr-1" />
+                            {car.fuelType}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {car.location}
+                        </div>
+
+                        <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                          {!isSold && (
+                            <>
+                              <Button
+                                onClick={() => addToCart("car", car)}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                                disabled={!user}
+                              >
+                                {car.listingType === "rent" ? (
+                                  <>
+                                    <Calendar className="w-4 h-4 mr-2" />
+                                    Book Now
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="w-4 h-4 mr-2" />
+                                    Add to Cart
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  if (!user) {
+                                    setIsAuthModalOpen(true)
+                                    return
+                                  }
+                                  toggleFavorite("car", car)
+                                }}
+                                className={`shrink-0 ${isFavorite(car.id) ? "text-red-500 border-red-500" : ""}`}
+                              >
+                                <Heart className={`w-4 h-4 ${isFavorite(car.id) ? "fill-current" : ""}`} />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleContactClick(car)}
+                                className="shrink-0"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+
+            {filteredCars.length === 0 && !carsLoading && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">No cars found matching your criteria.</p>
+                <Button
+                  variant="outline"
+                  className="mt-4 bg-transparent"
+                  onClick={() => {
+                    setSearchTerm("")
+                    setFilters({
+                      condition: "all",
+                      make: "all",
+                      priceRange: "all",
+                      year: "all",
+                      fuelType: "all",
+                      transmission: "all",
+                      location: "",
+                      listingType: "all",
+                    })
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

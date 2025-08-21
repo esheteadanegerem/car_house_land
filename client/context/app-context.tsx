@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import type React from "react"
 import { createContext, useContext, useReducer, type ReactNode } from "react"
 import type { User, Car, House, Land, Machine, Deal } from "@/types"
-import { CARS_DATA } from "@/lib/data/cars"
+import { fetchCars } from "@/lib/api/cars"
 import { houses } from "@/lib/data"
 import { MACHINES_DATA } from "@/lib/data/machines"
 import { LANDS_DATA } from "@/lib/data/lands"
@@ -29,6 +29,7 @@ interface AppState {
   houses: House[]
   machines: Machine[]
   lands: Land[]
+  carsLoading: boolean
 }
 
 type AppAction =
@@ -78,6 +79,7 @@ type AppAction =
   | { type: "ADD_LAND"; payload: Land }
   | { type: "UPDATE_LAND"; payload: { id: string; updates: Partial<Land> } }
   | { type: "DELETE_LAND"; payload: string }
+  | { type: "SET_CARS_LOADING"; payload: boolean }
 
 interface AppContextType extends AppState {
   dispatch: React.Dispatch<AppAction>
@@ -114,6 +116,7 @@ interface AppContextType extends AppState {
   addLand: (land: Land) => void
   updateLand: (id: string, updates: Partial<Land>) => void
   deleteLand: (id: string) => void
+  refreshCars: () => Promise<void>
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -230,6 +233,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
     case "DELETE_LAND":
       return { ...state, lands: state.lands.filter((land) => land.id !== action.payload) }
+    case "SET_CARS_LOADING":
+      return { ...state, carsLoading: action.payload }
     default:
       return state
   }
@@ -243,11 +248,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deals: [],
     soldItems: new Set(),
     isAuthModalOpen: false,
-    cars: CARS_DATA,
+    cars: [],
     houses: houses,
     machines: MACHINES_DATA,
     lands: LANDS_DATA,
+    carsLoading: false,
   })
+
+  const loadCarsFromAPI = async () => {
+    dispatch({ type: "SET_CARS_LOADING", payload: true })
+    try {
+      const apiCars = await fetchCars()
+
+      const savedCars = localStorage.getItem("carsData")
+      let adminCars: Car[] = []
+      if (savedCars) {
+        try {
+          const parsedCars = JSON.parse(savedCars)
+          if (Array.isArray(parsedCars)) {
+            adminCars = parsedCars
+          }
+        } catch (error) {
+          console.error("Error parsing saved cars:", error)
+        }
+      }
+
+      const allCars = [...apiCars]
+      adminCars.forEach((adminCar) => {
+        if (!allCars.find((car) => car.id === adminCar.id)) {
+          allCars.push(adminCar)
+        }
+      })
+
+      dispatch({ type: "SET_CARS", payload: allCars })
+    } catch (error) {
+      console.error("Error loading cars from API:", error)
+      const savedCars = localStorage.getItem("carsData")
+      if (savedCars) {
+        try {
+          const parsedCars = JSON.parse(savedCars)
+          if (Array.isArray(parsedCars)) {
+            dispatch({ type: "SET_CARS", payload: parsedCars })
+          }
+        } catch (error) {
+          console.error("Error parsing saved cars:", error)
+        }
+      }
+    } finally {
+      dispatch({ type: "SET_CARS_LOADING", payload: false })
+    }
+  }
+
+  const refreshCars = async () => {
+    await loadCarsFromAPI()
+  }
 
   const addToCart = (type: "car" | "house" | "land" | "machine", item: Car | House | Land | Machine) => {
     dispatch({ type: "ADD_TO_CART", payload: { type, item } })
@@ -399,7 +453,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return state.deals
   }
 
-  // Load data from localStorage on mount
   useEffect(() => {
     try {
       const mockUser = localStorage.getItem("mockUser")
@@ -431,24 +484,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const savedCars = localStorage.getItem("carsData")
-      if (savedCars) {
-        try {
-          const parsedCars = JSON.parse(savedCars)
-          if (Array.isArray(parsedCars) && parsedCars.length > 0) {
-            // Merge with static data, avoiding duplicates
-            const mergedCars = [...CARS_DATA]
-            parsedCars.forEach((savedCar: Car) => {
-              if (!mergedCars.find((car) => car.id === savedCar.id)) {
-                mergedCars.push(savedCar)
-              }
-            })
-            dispatch({ type: "SET_CARS", payload: mergedCars })
-          }
-        } catch (error) {
-          console.error("Error parsing saved cars:", error)
-        }
-      }
+      loadCarsFromAPI()
 
       const savedHouses = localStorage.getItem("housesData")
       if (savedHouses) {
@@ -482,7 +518,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (savedLands) {
         const parsedLands = JSON.parse(savedLands)
         if (Array.isArray(parsedLands)) {
-          // Merge static lands data with saved admin-added lands
           const mergedLands = [...LANDS_DATA]
           parsedLands.forEach((savedLand: Land) => {
             if (!mergedLands.find((land) => land.id === savedLand.id)) {
@@ -497,7 +532,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Save to localStorage when data changes
+  useEffect(() => {
+    try {
+      const adminCars = state.cars.filter((car) => car.id.toString().startsWith("car-"))
+      if (adminCars.length > 0) {
+        localStorage.setItem("carsData", JSON.stringify(adminCars))
+      }
+    } catch (error) {
+      console.error("Error saving cars to localStorage:", error)
+    }
+  }, [state.cars])
+
   useEffect(() => {
     try {
       localStorage.setItem("userCart", JSON.stringify(state.cart || []))
@@ -524,27 +569,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      // Only save dynamically added cars (not the original static ones)
-      const dynamicCars = state.cars.filter((car) => !CARS_DATA.find((staticCar) => staticCar.id === car.id))
-      if (dynamicCars.length > 0) {
-        localStorage.setItem("carsData", JSON.stringify(dynamicCars))
-      }
-    } catch (error) {
-      console.error("Error saving cars to localStorage:", error)
-    }
-  }, [state.cars])
-
-  useEffect(() => {
-    try {
-      const dynamicHouses = state.houses.filter((house) => !houses.find((staticHouse) => staticHouse.id === house.id))
-      localStorage.setItem("housesData", JSON.stringify(dynamicHouses))
-    } catch (error) {
-      console.error("Error saving houses to localStorage:", error)
-    }
-  }, [state.houses])
-
-  useEffect(() => {
-    try {
       const dynamicMachines = state.machines.filter(
         (machine) => !MACHINES_DATA.find((staticMachine) => staticMachine.id === machine.id),
       )
@@ -556,7 +580,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      // Only save dynamically added lands (not the original static ones)
       const dynamicLands = state.lands.filter((land) => !LANDS_DATA.find((staticLand) => staticLand.id === land.id))
       localStorage.setItem("landsData", JSON.stringify(dynamicLands))
     } catch (error) {
@@ -644,6 +667,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addLand,
     updateLand,
     deleteLand,
+    refreshCars,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
