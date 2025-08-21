@@ -22,7 +22,7 @@ const getLandById = asyncHandler(async (req, res) => {
 const createLand = asyncHandler(async (req, res) => {
   const {
     title, price, size, zoning, landUse, topography, waterAccess,
-    roadAccess, utilities, waterRights, description, nearbyAmenities, owner, city, region, zone, kebele
+     utilities, waterRights, description, nearbyAmenities, owner, city, region, zone, kebele
   } = req.body;
 
   // Log request body for debugging
@@ -78,8 +78,7 @@ const createLand = asyncHandler(async (req, res) => {
       landUse,
       topography,
       waterAccess,
-      roadAccess,
-      utilities: parseJSONSafely(utilities, 'utilities'),
+       utilities: parseJSONSafely(utilities, 'utilities'),
       waterRights: waterRights ? waterRights === 'true' : undefined, // Convert string to boolean
       description,
       images,

@@ -38,11 +38,7 @@ const landSchema = new mongoose.Schema({
     enum: ['none', 'well', 'river', 'lake', 'municipal', 'borehole'],
     default: 'none'
   },
-  roadAccess: {
-    type: String,
-    enum: ['paved', 'gravel', 'dirt', 'none'],
-    required: [true, 'Road access is required']
-  },
+ 
   utilities: {
     electricity: { type: Boolean, default: false },
     water: { type: Boolean, default: false },
