@@ -78,15 +78,10 @@ const carSchema = new mongoose.Schema({
     publicId: { type: String, required: true },
     isPrimary: { type: Boolean, default: false }
   }],
-  location: {
-    address: { type: String,   },
-    city: { type: String  },
-    region: { type: String  },
-    coordinates: {
-      latitude: Number,
-      longitude: Number
-    }
-  },
+    city: { type: String, required: true },
+    region: { type: String, required: true },
+    address: { type: String, required: true },
+    kebele: { type: String, trim: true },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

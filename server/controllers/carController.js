@@ -24,21 +24,9 @@ const createCar = asyncHandler(async (req, res) => {
   const {
     title, make, model, year, type, condition, price, mileage,
     fuelType, transmission, color, bodyType, features, description,
-    owner
+    owner, city, region, address, kebele
   } = req.body;
-
-  // Log request body for debugging
-  console.log('Request body:', req.body);
-  console.log('Uploaded files:', req.files);
-
-  // Validate required fields
-  const requiredFields = ['title', 'make', 'model', 'year', 'type', 'condition', 'price'];
-  for (const field of requiredFields) {
-    if (!req.body[field]) {
-      res.status(400);
-      throw new Error(`Missing required field: ${field}`);
-    }
-  }
+ 
 
   // Validate owner ObjectId
   if (!mongoose.isValidObjectId(owner)) {
@@ -88,7 +76,11 @@ const createCar = asyncHandler(async (req, res) => {
       features: features && typeof features === 'string' ? features.split(',').map(f => f.trim()) : [],
       description,
       images,
-       owner
+       owner,
+      city,
+      region,
+      address,
+      kebele
     });
 
     res.status(201).json(car);
