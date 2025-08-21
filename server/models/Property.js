@@ -24,8 +24,8 @@ const propertySchema = new mongoose.Schema({
   },
    
   size: {
-    value: { type: Number, required: true, min: [1, 'Size must be positive'] },
-    unit: { type: String, enum: ['sqm', 'sqft'], default: 'sqm' }
+     type:String,
+     required: [true, 'Size is required'],
   },
   bedrooms: {
     type: Number,
@@ -71,13 +71,12 @@ const propertySchema = new mongoose.Schema({
     isPrimary: { type: Boolean, default: false },
     room: { type: String, trim: true } // bedroom, bathroom, kitchen, etc.
   }],
-  location: {
+  
     address: { type: String, required: true },
     city: { type: String, required: true },
     region: { type: String, required: true },
-    neighborhood: { type: String, trim: true },
-   
-  },
+    
+ 
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -98,41 +97,12 @@ const propertySchema = new mongoose.Schema({
     ref: 'User'
   }],
    
-  rentalTerms: {
-    minRentalPeriod: { type: Number, min: 1 }, // in months
-    maxRentalPeriod: { type: Number, min: 1 }, // in months
-    securityDeposit: { type: Number, min: 0 },
-    utilitiesIncluded: [{ type: String }], // water, electricity, internet, etc.
-    petsAllowed: { type: Boolean, default: false },
-    furnished: { type: Boolean, default: false }
-  },
-  utilities: {
-    electricity: { type: Boolean, default: false },
-    water: { type: Boolean, default: false },
-    internet: { type: Boolean, default: false },
-    gas: { type: Boolean, default: false },
-    generator: { type: Boolean, default: false }
-  }
 }, {
   timestamps: true,
    
 });
-
-// Indexes
-propertySchema.index({ propertyType: 1, type: 1, status: 1 });
-propertySchema.index({ price: 1 });
-propertySchema.index({ bedrooms: 1, bathrooms: 1 });
-propertySchema.index({ createdAt: -1 });
-
-// Virtual for primary image
-propertySchema.virtual('primaryImage').get(function() {
-  const primary = this.images.find(img => img.isPrimary);
-  return primary || this.images[0];
-});
-
-// Virtual for price per square meter
-propertySchema.virtual('pricePerSqm').get(function() {
-  return this.size.value > 0 ? Math.round(this.price / this.size.value) : 0;
-});
+ 
+ 
+ 
 
 module.exports = mongoose.model('Property', propertySchema);

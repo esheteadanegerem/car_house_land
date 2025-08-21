@@ -1,163 +1,190 @@
 const Property = require('../models/Property');
 const asyncHandler = require('express-async-handler');
-const { uploadImageToCloudinary, deleteImageFromCloudinary } = require('../utils/cloudinary');
+const { cloudinary } = require('../utils/cloudinary');
+const mongoose = require('mongoose');
+const User = require('../models/User');
 
-// Get all properties
 const getProperties = asyncHandler(async (req, res) => {
-  const properties = await Property.find()
-    .populate('owner', 'name email')
-    .lean();
-  res.json({ status: 'success', data: properties });
+  const properties = await Property.find().lean();
+  res.json(properties);
 });
 
-// Get property by ID
 const getPropertyById = asyncHandler(async (req, res) => {
-  const property = await Property.findById(req.params.id)
-    .populate('owner', 'name email')
-    .lean();
+  const property = await Property.findById(req.params.id).lean();
   
   if (!property) {
     res.status(404);
     throw new Error('Property not found');
   }
-  
-  if (req.user) {
-    await Property.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
-  }
-  
-  res.json({ status: 'success', data: property });
+
+  await Property.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+  res.json(property);
 });
 
-// Create property
+
 const createProperty = asyncHandler(async (req, res) => {
-  const propertyData = req.body;
-  
-  if (req.files && req.files.length > 0) {
-    const images = await Promise.all(
-      req.files.map(async (file, index) => {
-        const result = await uploadImageToCloudinary(file);
-        return {
-          url: result.secure_url,
-          publicId: result.public_id,
-          isPrimary: index === 0
-        };
-      })
-    );
-    propertyData.images = images;
+  const {
+    title, type, propertyType, price, size, bedrooms, bathrooms,
+    floors, parkingSpaces, yearBuilt, features, amenities, description,
+    city, address, region, owner
+  } = req.body;
+
+  // Log request body for debugging
+  console.log('Request body:', req.body);
+  console.log('Uploaded files:', req.files);
+
+  // Validate required fields
+  if (!title || !type || !propertyType || !price || !size || !bedrooms || !bathrooms || !city || !address || !region || !owner) {
+    res.status(400);
+    throw new Error('All required fields must be provided');
   }
-  
-  propertyData.owner = req.user._id;
-  const property = await Property.create(propertyData);
-  
-  res.status(201).json({ status: 'success', data: property });
+
+  // Validate owner ObjectId
+  if (!mongoose.isValidObjectId(owner)) {
+    res.status(400);
+    throw new Error('Invalid owner ID');
+  }
+
+  // Check if owner exists
+  const ownerExists = await User.findById(owner);
+  if (!ownerExists) {
+    res.status(400);
+    throw new Error('Owner not found');
+  }
+
+  // Validate features is an array
+  let parsedFeatures = [];
+  if (features) {
+    try {
+      parsedFeatures = Array.isArray(features) ? features : JSON.parse(features);
+      if (!Array.isArray(parsedFeatures)) {
+        res.status(400);
+        throw new Error('Features must be an array');
+      }
+    } catch (error) {
+      res.status(400);
+      throw new Error('Invalid features format');
+    }
+  }
+
+  // Handle image uploads
+  let images = [];
+  if (req.files && req.files.length > 0) {
+    if (req.files.length > 3) {
+      res.status(400);
+      throw new Error('Maximum 3 images allowed');
+    }
+    images = req.files.map((file, index) => ({
+      url: file.path, // Cloudinary URL
+      publicId: file.filename, // Cloudinary public ID
+      isPrimary: index === 0
+    }));
+  }
+
+  try {
+    const property = await Property.create({
+      title,
+      type,
+      propertyType,
+      price: parseFloat(price),
+      size: parseFloat(size),
+      bedrooms: parseInt(bedrooms),
+      bathrooms: parseInt(bathrooms),
+      floors: floors ? parseInt(floors) : undefined,
+      parkingSpaces: parkingSpaces ? parseInt(parkingSpaces) : undefined,
+      yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
+      features: parsedFeatures,
+      amenities: amenities ? (Array.isArray(amenities) ? amenities : JSON.parse(amenities)) : [],
+      description,
+      images,
+      city,
+      address,
+      region,
+      owner
+    });
+
+    // Ensure response is sent only once
+    return res.status(201).json({
+      success: true,
+      data: property,
+      message: 'Property created successfully'
+    });
+  } catch (error) {
+    console.error('Create property error:', error);
+    res.status(400);
+    throw new Error(`Invalid property data: ${error.message}`);
+  }
 });
 
-// Update property
+
 const updateProperty = asyncHandler(async (req, res) => {
+  console.log('Update request body:', req.body);
   const property = await Property.findById(req.params.id);
-  
+
   if (!property) {
     res.status(404);
     throw new Error('Property not found');
   }
-  
-  const updateData = { ...req.body };
-  
-  if (req.files && req.files.length > 0) {
-    // Delete existing images if needed
-    if (property.images && property.images.length > 0) {
-      await Promise.all(
-        property.images.map(img => deleteImageFromCloudinary(img.publicId))
-      );
-    }
-    
-    // Upload new images
-    const images = await Promise.all(
-      req.files.map(async (file, index) => {
-        const result = await uploadImageToCloudinary(file);
-        return {
-          url: result.secure_url,
-          publicId: result.public_id,
-          isPrimary: index === 0
-        };
-      })
-    );
-    updateData.images = images;
-  }
-  
+
   const updatedProperty = await Property.findByIdAndUpdate(
     req.params.id,
-    updateData,
+    { $set: req.body },
     { new: true, runValidators: true }
   );
-  
-  res.json({ status: 'success', data: updatedProperty });
+
+  res.json(updatedProperty);
 });
 
-// Delete property
 const deleteProperty = asyncHandler(async (req, res) => {
   const property = await Property.findById(req.params.id);
-  
+
   if (!property) {
     res.status(404);
     throw new Error('Property not found');
   }
-  
-  if (property.images && property.images.length > 0) {
-    await Promise.all(
-      property.images.map(img => deleteImageFromCloudinary(img.publicId))
-    );
-  }
-  
-  await Property.findByIdAndDelete(req.params.id);
-  
-  res.json({ status: 'success', message: 'Property deleted successfully' });
+
+  await property.deleteOne();
+  res.json({ message: 'Property removed' });
 });
 
-// Toggle favorite
 const toggleFavorite = asyncHandler(async (req, res) => {
   const property = await Property.findById(req.params.id);
-  
+
   if (!property) {
     res.status(404);
     throw new Error('Property not found');
   }
-  
+
   const userId = req.user._id;
   const isFavorited = property.favorites.includes(userId);
-  
+
   if (isFavorited) {
     property.favorites = property.favorites.filter(id => id.toString() !== userId.toString());
   } else {
     property.favorites.push(userId);
   }
-  
+
   await property.save();
-  
-  res.json({ 
-    status: 'success', 
-    message: isFavorited ? 'Removed from favorites' : 'Added to favorites',
-    data: property.favorites 
-  });
+  res.json({ favorited: !isFavorited });
 });
 
-// Get property stats
 const getPropertyStats = asyncHandler(async (req, res) => {
-  const total = await Property.countDocuments();
-  const byType = await Property.aggregate([
+  const totalProperties = await Property.countDocuments();
+  const propertiesByType = await Property.aggregate([
     { $group: { _id: '$propertyType', count: { $sum: 1 } } }
   ]);
-  const byStatus = await Property.aggregate([
+  const propertiesByStatus = await Property.aggregate([
     { $group: { _id: '$status', count: { $sum: 1 } } }
   ]);
-  
+  const avgPrice = await Property.aggregate([
+    { $group: { _id: null, avgPrice: { $avg: '$price' } } }
+  ]);
+
   res.json({
-    status: 'success',
-    data: {
-      total,
-      byType,
-      byStatus
-    }
+    totalProperties,
+    propertiesByType,
+    propertiesByStatus,
+    averagePrice: avgPrice[0]?.avgPrice || 0
   });
 });
 
