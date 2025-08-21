@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Star, MapPin, Calendar, Heart, Share2 } from "lucide-react"
+import { ArrowLeft, Star, MapPin, Calendar, Heart, Share2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
+import { fetchCarById } from "@/lib/api/cars"
+import type { Car } from "@/types"
 
 interface CarDetailProps {
   carId: string
@@ -17,10 +19,45 @@ export function CarDetail({ carId }: CarDetailProps) {
   const { addToCart, user, setIsAuthModalOpen, soldItems, cars, createDeal } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [apiCar, setApiCar] = useState<Car | null>(null)
 
-  const car = cars?.find((c) => c.id === carId || c.id === String(carId) || String(c.id) === carId)
+  const contextCar = cars?.find((c) => c.id === carId || c.id === String(carId) || String(c.id) === carId)
+  const car = contextCar || apiCar
+
+  useEffect(() => {
+    const loadCar = async () => {
+      if (contextCar) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      try {
+        const fetchedCar = await fetchCarById(carId)
+        setApiCar(fetchedCar)
+      } catch (error) {
+        console.error("Error fetching car:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCar()
+  }, [carId, contextCar])
 
   const isSold = soldItems.has(carId)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading car details...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!car) {
     return (
@@ -44,7 +81,8 @@ export function CarDetail({ carId }: CarDetailProps) {
     { label: "Fuel Type", value: car.fuelType || "N/A" },
     { label: "Transmission", value: car.transmission || "N/A" },
     { label: "Condition", value: car.condition || "N/A" },
-    { label: "Location", value: car.location || "N/A" },
+    { label: "Body Type", value: car.bodyType || "N/A" },
+    { label: "Color", value: car.color || "N/A" },
   ]
 
   const contactDealer = (car: any) => {
@@ -139,7 +177,9 @@ export function CarDetail({ carId }: CarDetailProps) {
                 </div>
                 <div className="flex items-center">
                   <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="text-sm sm:text-base">{car.location || "N/A"}</span>
+                  <span className="text-sm sm:text-base">
+                    {car.city}, {car.region}
+                  </span>
                 </div>
                 <div className="flex items-center">
                   <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
@@ -177,6 +217,35 @@ export function CarDetail({ carId }: CarDetailProps) {
                 </Button>
               </div>
             )}
+
+            {/* Location Details */}
+            <Card>
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg">Location Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between py-1">
+                    <span className="text-muted-foreground text-sm sm:text-base">City:</span>
+                    <span className="font-medium text-sm sm:text-base">{car.city || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-muted-foreground text-sm sm:text-base">Region:</span>
+                    <span className="font-medium text-sm sm:text-base">{car.region || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-muted-foreground text-sm sm:text-base">Address:</span>
+                    <span className="font-medium text-sm sm:text-base">{car.address || "N/A"}</span>
+                  </div>
+                  {car.kebele && (
+                    <div className="flex justify-between py-1">
+                      <span className="text-muted-foreground text-sm sm:text-base">Kebele:</span>
+                      <span className="font-medium text-sm sm:text-base">{car.kebele}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Specifications */}
             <Card>
