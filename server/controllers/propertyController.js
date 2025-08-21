@@ -78,7 +78,7 @@ const createProperty = asyncHandler(async (req, res) => {
       type,
       propertyType,
       price: parseFloat(price),
-      size: parseFloat(size),
+      size ,
       bedrooms: parseInt(bedrooms),
       bathrooms: parseInt(bathrooms),
       floors: floors ? parseInt(floors) : undefined,
