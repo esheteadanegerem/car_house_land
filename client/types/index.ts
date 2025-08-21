@@ -63,6 +63,10 @@ export interface Car {
   transmission: string
   condition: "new" | "used"
   location: string
+  city: string
+  region: string
+  address: string
+  kebele?: string
   images: string[]
   status: "available" | "sold" | "pending"
   rating: number

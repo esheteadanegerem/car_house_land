@@ -230,14 +230,15 @@ export function Cart() {
                   </div>
                 </div>
 
-                <Link href="/deals">
-                  <Button
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 transform hover:scale-105 transition-all duration-200"
-                    size="lg"
-                  >
-                    Go to Deals
-                  </Button>
-                </Link>
+                <Button
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 transform hover:scale-105 transition-all duration-200"
+                  size="lg"
+                  onClick={() => {
+                    window.location.href = "/deals"
+                  }}
+                >
+                  Go to Deals
+                </Button>
 
                 <div className="text-center">
                   <Link
