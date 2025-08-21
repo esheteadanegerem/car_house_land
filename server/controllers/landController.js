@@ -29,14 +29,7 @@ const createLand = asyncHandler(async (req, res) => {
   console.log('Request body:', req.body);
   console.log('Uploaded files:', req.files);
 
-  // Validate required fields
-  const requiredFields = ['title', 'price', 'zoning', 'landUse', 'topography', 'roadAccess', 'description', 'owner'];
-  for (const field of requiredFields) {
-    if (!req.body[field]) {
-      res.status(400);
-      throw new Error(`Missing required field: ${field}`);
-    }
-  }
+   
 
   // Validate owner ObjectId
   if (!mongoose.isValidObjectId(owner)) {
