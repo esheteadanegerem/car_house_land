@@ -28,16 +28,7 @@ const createProperty = asyncHandler(async (req, res) => {
     floors, parkingSpaces, yearBuilt, features, amenities, description,
     city, address, region, owner
   } = req.body;
-
-  // Log request body for debugging
-  console.log('Request body:', req.body);
-  console.log('Uploaded files:', req.files);
-
-  // Validate required fields
-  if (!title || !type || !propertyType || !price || !size || !bedrooms || !bathrooms || !city || !address || !region || !owner) {
-    res.status(400);
-    throw new Error('All required fields must be provided');
-  }
+  
 
   // Validate owner ObjectId
   if (!mongoose.isValidObjectId(owner)) {
