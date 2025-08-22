@@ -12,8 +12,29 @@ const {
 } = require('../controllers/userController');
 const { protect, adminOnly } = require('../middlewares/auth');
 const { validateRequest } = require('../middlewares/validation');
-
+const User=require('../models/User.js')
 const router = express.Router();
+
+
+
+router.get('/owner/list', async (req, res) => {
+  try {
+    const owners = await User.find({ role: 'owner' })
+      .select('_id fullName'); // only include id & fullName
+
+    res.status(200).json({
+      success: true,
+      count: owners.length,
+      data: owners
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
 
 // All routes require authentication
 router.use(protect);
