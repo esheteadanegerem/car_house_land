@@ -251,10 +251,10 @@ const getUserStats = async (req, res) => {
           _id: null,
           totalUsers: { $sum: 1 },
           activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } },
-          verifiedUsers: { $sum: { $cond: [{ $eq: ['$isVerified', true] }, 1, 0] } },
+           
           adminUsers: { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
           ownerUsers: { $sum: { $cond: [{ $eq: ['$role', 'owner'] }, 1, 0] } },
-          regularUsers: { $sum: { $cond: [{ $eq: ['$role', 'user'] }, 1, 0] } },
+          
         },
       },
     ]);
