@@ -28,7 +28,7 @@ const machineSchema = new mongoose.Schema({
    type: {
     type: String,
     enum: ['sale', 'rent'],
-    required: [true, 'Car type (sale/rent) is required']
+    required: [true, 'machine type (sale/rent) is required']
   },
   condition: {
     type: String,
