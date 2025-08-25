@@ -28,7 +28,7 @@ const storage = new CloudinaryStorage({
 // Multer setup for multiple file uploads (max 3 images)
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 2 * 1024 * 1024, files: 3 },
+  limits: { fileSize: 10 * 1024 * 1024, files: 3 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png/;
     const mimetype = filetypes.test(file.mimetype);

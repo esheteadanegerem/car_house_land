@@ -78,7 +78,7 @@ const machineSchema = new mongoose.Schema({
 },
   region: {
     type: String,
-    trim: true // Optional, consistent with createLand flexibility
+    trim: true  
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
