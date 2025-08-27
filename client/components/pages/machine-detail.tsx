@@ -27,10 +27,20 @@ interface MachineDetailProps {
 }
 
 export function MachineDetail({ machineId }: MachineDetailProps) {
-  const { machines, dispatch } = useApp()
+  const { machines, machinesLoading, dispatch, createDeal } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   const machine = machines?.find((m) => m.id === machineId || m.id === String(machineId) || String(m.id) === machineId)
+
+  if (machinesLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Loading machine details...</h1>
+        </div>
+      </div>
+    )
+  }
 
   if (!machines) {
     return (
@@ -124,77 +134,97 @@ export function MachineDetail({ machineId }: MachineDetailProps) {
 
             {/* Machine Specifications */}
             <Card>
-              <CardHeader>
-                <CardTitle>Machine Specifications</CardTitle>
+              <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100 border-b border-orange-200">
+                <CardTitle className="text-xl font-bold text-orange-800">Machine Specifications</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="w-5 h-5 text-orange-600" />
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Calendar className="w-6 h-6 text-orange-600" />
                     <div>
-                      <p className="text-sm text-gray-600">Year</p>
-                      <p className="font-semibold">{machine.year || "N/A"}</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Year</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {machine.yearManufactured || machine.year || "N/A"}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Gauge className="w-5 h-5 text-orange-600" />
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Gauge className="w-6 h-6 text-orange-600" />
                     <div>
-                      <p className="text-sm text-gray-600">Power</p>
-                      <p className="font-semibold">{machine.power || "N/A"}</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Power</p>
+                      <p className="text-lg font-bold text-gray-900">{machine.power || "N/A"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Weight className="w-5 h-5 text-orange-600" />
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Weight className="w-6 h-6 text-orange-600" />
                     <div>
-                      <p className="text-sm text-gray-600">Weight</p>
-                      <p className="font-semibold">{(machine.weight || 0).toLocaleString()} lbs</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Weight</p>
+                      <p className="text-lg font-bold text-gray-900">{(machine.weight || 0).toLocaleString()} lbs</p>
                     </div>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="my-6" />
 
                 <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-gray-600 leading-relaxed">{machine.description || "No description available"}</p>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Description</h3>
+                  <p className="text-gray-700 leading-relaxed text-base bg-gray-50 p-4 rounded-lg">
+                    {machine.description || "No description available"}
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Technical Details</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Brand</span>
-                        <span className="font-medium">{machine.brand || "N/A"}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+                    <h4 className="text-lg font-bold text-orange-800 mb-3">Technical Details</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-orange-200">
+                        <span className="text-sm font-medium text-gray-600">Brand:</span>
+                        <span className="text-sm font-bold text-gray-900">{machine.brand || "N/A"}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Model</span>
-                        <span className="font-medium">{machine.model || "N/A"}</span>
+                      <div className="flex justify-between items-center py-2 border-b border-orange-200">
+                        <span className="text-sm font-medium text-gray-600">Model:</span>
+                        <span className="text-sm font-bold text-gray-900">{machine.model || "N/A"}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Capacity</span>
-                        <span className="font-medium">{machine.capacity || "N/A"}</span>
+                      <div className="flex justify-between items-center py-2 border-b border-orange-200">
+                        <span className="text-sm font-medium text-gray-600">Category:</span>
+                        <span className="text-sm font-bold text-gray-900 capitalize">{machine.category || "N/A"}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Hours Used</span>
-                        <span className="font-medium">{(machine.hoursUsed || 0).toLocaleString()}</span>
+                      {machine.subcategory && (
+                        <div className="flex justify-between items-center py-2 border-b border-orange-200">
+                          <span className="text-sm font-medium text-gray-600">Subcategory:</span>
+                          <span className="text-sm font-bold text-gray-900 capitalize">{machine.subcategory}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center py-2 border-b border-orange-200">
+                        <span className="text-sm font-medium text-gray-600">Capacity:</span>
+                        <span className="text-sm font-bold text-gray-900">{machine.capacity || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-sm font-medium text-gray-600">Hours Used:</span>
+                        <span className="text-sm font-bold text-gray-900">
+                          {(machine.hoursUsed || 0).toLocaleString()}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Condition & Warranty</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Condition</span>
-                        <span className="font-medium capitalize">{machine.condition || "N/A"}</span>
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                    <h4 className="text-lg font-bold text-green-800 mb-3">Condition & Warranty</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-green-200">
+                        <span className="text-sm font-medium text-gray-600">Condition:</span>
+                        <Badge variant="outline" className="capitalize">
+                          {machine.condition || "N/A"}
+                        </Badge>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Machine Type</span>
-                        <span className="font-medium capitalize">{machine.machineType || "N/A"}</span>
+                      <div className="flex justify-between items-center py-2 border-b border-green-200">
+                        <span className="text-sm font-medium text-gray-600">Machine Type:</span>
+                        <span className="text-sm font-bold text-gray-900 capitalize">
+                          {machine.machineType || "N/A"}
+                        </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Warranty</span>
-                        <span className="font-medium">{machine.warranty || "N/A"}</span>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-sm font-medium text-gray-600">Warranty:</span>
+                        <span className="text-sm font-bold text-gray-900">{machine.warranty || "N/A"}</span>
                       </div>
                     </div>
                   </div>
@@ -217,7 +247,11 @@ export function MachineDetail({ machineId }: MachineDetailProps) {
                   </div>
                   <div className="flex items-center justify-center space-x-1 text-gray-600">
                     <MapPin className="w-4 h-4" />
-                    <span>{machine.location || "Location not specified"}</span>
+                    <span>
+                      {machine.city && machine.region
+                        ? `${machine.city}, ${machine.region}`
+                        : machine.location || "Location not specified"}
+                    </span>
                   </div>
                 </div>
 
@@ -268,7 +302,17 @@ export function MachineDetail({ machineId }: MachineDetailProps) {
                   </div>
                 </div>
 
-                <Button variant="outline" className="w-full bg-transparent">
+                <Button
+                  variant="outline"
+                  className="w-full bg-transparent"
+                  onClick={() =>
+                    createDeal(
+                      "machine",
+                      machine,
+                      "I'm interested in this machine. Please contact me with more details.",
+                    )
+                  }
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Contact Dealer
                 </Button>

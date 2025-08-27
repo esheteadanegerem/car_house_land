@@ -1,8 +1,8 @@
 const asyncHandler = require('express-async-handler');
 const Machine = require('../models/Machine');
 const { cloudinary, uploadImages } = require('../utils/cloudinary');
-const mongoose = require("mongoose")
-const User= require('../models/User');
+const mongoose = require("mongoose");
+const User = require('../models/User');
 
 const getMachines = asyncHandler(async (req, res) => {
   const machines = await Machine.find().lean();
@@ -23,7 +23,7 @@ const createMachine = asyncHandler(async (req, res) => {
   const {
     title,
     category,
-     brand,
+    brand,
     model,
     condition,
     price,
@@ -36,10 +36,11 @@ const createMachine = asyncHandler(async (req, res) => {
     zone,
     owner,
     status,
+    type, // Added type to destructuring
   } = req.body;
- 
+
   // Validate required fields
-  const requiredFields = ['title', 'category', 'brand', 'condition', 'price', 'description', 'address', 'city', 'owner'];
+  const requiredFields = ['title', 'category', 'brand', 'condition', 'price', 'description', 'address', 'city', 'owner', 'type']; // Added type to required fields
   for (const field of requiredFields) {
     if (!req.body[field]) {
       res.status(400);
@@ -96,7 +97,7 @@ const createMachine = asyncHandler(async (req, res) => {
     const machine = await Machine.create({
       title,
       category,
-       brand,
+      brand,
       model,
       condition,
       price: parseFloat(price), // Ensure price is a number
@@ -110,6 +111,7 @@ const createMachine = asyncHandler(async (req, res) => {
       zone,
       owner,
       status: status || 'available', // Default to 'available' if not provided
+      type, // Include type in the create call
     });
 
     res.status(201).json({
@@ -149,8 +151,6 @@ const updateMachine = asyncHandler(async (req, res) => {
 });
 
 const deleteMachine = asyncHandler(async (req, res) => {
- 
-
   const machine = await Machine.findById(req.params.id);
   if (!machine) {
     res.status(404);

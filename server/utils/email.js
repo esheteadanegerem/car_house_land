@@ -80,10 +80,10 @@ const wrapEmail = (title, content) => `
  */
 const emailTemplates = {
   welcome: (name) => ({
-    subject: "🎉 Welcome to Massgebeya!",
+    subject: "🎉 Welcome to Masgebeya!",
     html: wrapEmail("Welcome to Massgebeya", `
       <p>Hi ${name},</p>
-      <p>Thank you for joining <strong>Massgebeya</strong>, Ethiopia's trusted marketplace for cars, properties, lands, and machinery.</p>
+      <p>Thank you for joining <strong>Masgebeya</strong>, Ethiopia's trusted marketplace for cars, properties, lands, and machinery.</p>
       <ul style="color: #555; line-height: 1.8;">
         <li>Browse thousands of verified listings</li>
         <li>Contact dealers and owners directly</li>

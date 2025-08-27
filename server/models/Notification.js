@@ -18,7 +18,7 @@ const notificationSchema = new mongoose.Schema({
       'deal_accepted',
       'deal_rejected',
       'deal_completed',
-      
+    
        
       'verification_approved',
       'verification_rejected',

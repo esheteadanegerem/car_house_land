@@ -28,8 +28,19 @@ interface HouseDetailProps {
 }
 
 export function HouseDetail({ houseId }: HouseDetailProps) {
-  const { houses, dispatch } = useApp()
+  const { houses, housesLoading, dispatch } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
+  if (housesLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 sm:py-16 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Loading property...</h1>
+        </div>
+      </div>
+    )
+  }
 
   if (!houses) {
     return (
@@ -131,57 +142,91 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
 
             {/* Property Details */}
             <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg">Property Details</CardTitle>
+              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200">
+                <CardTitle className="text-xl font-bold text-green-800">Property Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 sm:space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Bed className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Bed className="w-6 h-6 text-green-600" />
                     <div>
-                      <p className="text-xs sm:text-sm text-gray-600">Bedrooms</p>
-                      <p className="font-semibold text-sm sm:text-base">{house.bedrooms || "N/A"}</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Bedrooms</p>
+                      <p className="text-lg font-bold text-gray-900">{house.bedrooms || "N/A"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Bath className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Bath className="w-6 h-6 text-green-600" />
                     <div>
-                      <p className="text-xs sm:text-sm text-gray-600">Bathrooms</p>
-                      <p className="font-semibold text-sm sm:text-base">{house.bathrooms || "N/A"}</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Bathrooms</p>
+                      <p className="text-lg font-bold text-gray-900">{house.bathrooms || "N/A"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Square className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Square className="w-6 h-6 text-green-600" />
                     <div>
-                      <p className="text-xs sm:text-sm text-gray-600">Size</p>
-                      <p className="font-semibold text-sm sm:text-base">{(house.size || 0).toLocaleString()} sq ft</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Size</p>
+                      <p className="text-lg font-bold text-gray-900">{house.size || "N/A"} sq ft</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Calendar className="w-6 h-6 text-green-600" />
                     <div>
-                      <p className="text-xs sm:text-sm text-gray-600">Built</p>
-                      <p className="font-semibold text-sm sm:text-base">{house.yearBuilt || "N/A"}</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Built</p>
+                      <p className="text-lg font-bold text-gray-900">{house.yearBuilt || "N/A"}</p>
                     </div>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="my-6" />
 
                 <div>
-                  <h3 className="font-semibold mb-2 text-sm sm:text-base">Description</h3>
-                  <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Description</h3>
+                  <p className="text-gray-700 leading-relaxed text-base bg-gray-50 p-4 rounded-lg">
                     {house.description || "No description available"}
                   </p>
                 </div>
 
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <MapPin className="w-5 h-5 text-green-600 mr-2" />
+                    Location Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm font-medium text-gray-600">City:</span>
+                      <span className="text-sm font-bold text-gray-900">{house.city}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm font-medium text-gray-600">Region:</span>
+                      <span className="text-sm font-bold text-gray-900">{house.region}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm font-medium text-gray-600">Address:</span>
+                      <span className="text-sm font-bold text-gray-900">{house.address}</span>
+                    </div>
+                  </div>
+                </div>
+
                 {house.amenities && house.amenities.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2 text-sm sm:text-base">Amenities</h3>
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 className="text-lg font-bold text-blue-800 mb-3">Amenities</h3>
+                    <div className="flex flex-wrap gap-2">
                       {house.amenities.map((amenity, index) => (
-                        <Badge key={index} variant="outline" className="text-xs sm:text-sm">
+                        <Badge key={index} variant="outline" className="bg-white border-blue-300 text-blue-700">
                           {amenity}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {house.features && house.features.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 className="text-lg font-bold text-green-800 mb-3">Property Features</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {house.features.map((feature, index) => (
+                        <Badge key={index} variant="outline" className="bg-white border-green-300 text-green-700">
+                          {feature}
                         </Badge>
                       ))}
                     </div>
@@ -205,7 +250,9 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
                   </div>
                   <div className="flex items-center justify-center space-x-1 text-gray-600">
                     <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="text-sm sm:text-base">{house.location}</span>
+                    <span className="text-sm sm:text-base">
+                      {house.city}, {house.region}
+                    </span>
                   </div>
                 </div>
 
@@ -260,31 +307,6 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
                   <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                   Contact Agent
                 </Button>
-              </CardContent>
-            </Card>
-
-            {/* Property Features */}
-            <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg">Property Features</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 sm:space-y-3">
-                <div className="flex justify-between text-sm sm:text-base">
-                  <span className="text-gray-600">Property Type</span>
-                  <span className="font-medium capitalize">{house.propertyType}</span>
-                </div>
-                <div className="flex justify-between text-sm sm:text-base">
-                  <span className="text-gray-600">Listing Type</span>
-                  <span className="font-medium capitalize">{house.listingType}</span>
-                </div>
-                <div className="flex justify-between text-sm sm:text-base">
-                  <span className="text-gray-600">Parking Spaces</span>
-                  <span className="font-medium">{house.parking}</span>
-                </div>
-                <div className="flex justify-between text-sm sm:text-base">
-                  <span className="text-gray-600">Year Built</span>
-                  <span className="font-medium">{house.yearBuilt || "N/A"}</span>
-                </div>
               </CardContent>
             </Card>
           </div>

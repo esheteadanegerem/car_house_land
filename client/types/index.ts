@@ -1,4 +1,24 @@
 export interface User {
+  _id: string
+  fullName: string
+  email: string
+  phone: string
+  role: "user" | "admin" | "owner"
+  avatar?: string
+  address?: {
+    street?: string
+    city?: string
+    region?: string
+    country?: string
+  }
+  isActive: boolean
+  isVerified: boolean
+  lastLogin?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LegacyUser {
   id: string
   name: string
   email: string
@@ -92,6 +112,9 @@ export interface House {
   bathrooms: number
   size: number
   location: string
+  city: string
+  region: string
+  address: string
   images: string[]
   status: "available" | "sold" | "pending"
   rating: number
@@ -117,9 +140,14 @@ export interface Land {
   title: string
   price: number
   size: number
+  sizeUnit?: "hectare" | "acre" | "sqm" // Added size unit field
   location: string
+  city: string // Added city field
+  region: string // Added region field
+  zone?: string // Added zone field
+  kebele?: string // Added kebele field
   images: string[]
-  status: "available" | "sold" | "pending"
+  status: "available" | "sold" | "pending" | "reserved" // Added reserved status
   rating: number
   reviews: number
   description: string
@@ -130,12 +158,20 @@ export interface Land {
   sellerPhone: string
   sellerEmail: string
   zoning: string
+  landUse?: string // Added land use field
+  topography?: string // Added topography field
   listingType: "sale" | "rent" | "lease"
   soilType: string
   waterAccess: boolean
   roadAccess: boolean
   utilities: string[]
   developmentPotential: string
+  nearbyAmenities?: Array<{
+    // Added nearby amenities field
+    name: string
+    distance: number
+    type: string
+  }>
 }
 
 export interface Machine {
@@ -147,6 +183,10 @@ export interface Machine {
   price: number
   condition: "new" | "used" | "refurbished"
   location: string
+  city: string
+  region?: string
+  zone?: string
+  address: string
   images: string[]
   status: "available" | "sold" | "pending"
   rating: number
@@ -165,4 +205,10 @@ export interface Machine {
   hoursUsed: number
   warranty: string
   listingType: "sale" | "rent" | "lease"
+  category: string
+  subcategory?: string
+  yearManufactured?: number
+  features: string[]
+  views: number
+  favorites: string[]
 }

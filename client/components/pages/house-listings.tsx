@@ -13,7 +13,7 @@ import type { House } from "@/types"
 import { useApp } from "@/context/app-context"
 
 export function HouseListings() {
-  const { houses } = useApp()
+  const { houses, housesLoading } = useApp()
   const [filteredHouses, setFilteredHouses] = React.useState<House[]>(houses)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
@@ -125,7 +125,7 @@ export function HouseListings() {
 
             <div className="flex justify-center space-x-4">
               <Badge variant="secondary" className="bg-green-500 text-white px-3 py-1 text-sm">
-                {houses.length} Properties Available
+                {housesLoading ? "Loading..." : `${houses.length} Properties Available`}
               </Badge>
               <Badge variant="secondary" className="bg-white/20 text-white px-3 py-1 text-sm">
                 Verified Listings
@@ -265,12 +265,21 @@ export function HouseListings() {
         {/* Results Count */}
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
-            Showing {filteredHouses.length} of {houses.length} properties
+            {housesLoading
+              ? "Loading properties..."
+              : `Showing ${filteredHouses.length} of ${houses.length} properties`}
           </p>
         </div>
 
         {/* Houses Grid/List */}
-        {filteredHouses.length > 0 ? (
+        {housesLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-center space-y-4">
+              <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-gray-600">Loading properties...</p>
+            </div>
+          </div>
+        ) : filteredHouses.length > 0 ? (
           <div
             className={`${viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"} animate-fade-in`}
           >

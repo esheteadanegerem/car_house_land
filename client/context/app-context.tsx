@@ -3,14 +3,16 @@
 import { useEffect } from "react"
 import type React from "react"
 import { createContext, useContext, useReducer, type ReactNode } from "react"
-import type { User, Car, House, Land, Machine, Deal } from "@/types"
+import type { Car, House, Land, Machine, Deal } from "@/types"
 import { fetchCars } from "@/lib/api/cars"
-import { houses } from "@/lib/data"
+import { fetchProperties } from "@/lib/api/properties"
+import { fetchLands } from "@/lib/api/lands"
+import { fetchMachines } from "@/lib/api/machines"
 import { MACHINES_DATA } from "@/lib/data/machines"
-import { LANDS_DATA } from "@/lib/data/lands"
+import { useAuth } from "@/hooks/use-auth"
+import type { User } from "@/lib/auth"
 
 interface AppState {
-  user: User | null
   cart: Array<{
     id: string
     type: "car" | "house" | "land" | "machine"
@@ -30,10 +32,12 @@ interface AppState {
   machines: Machine[]
   lands: Land[]
   carsLoading: boolean
+  housesLoading: boolean
+  landsLoading: boolean
+  machinesLoading: boolean
 }
 
 type AppAction =
-  | { type: "SET_USER"; payload: User | null }
   | { type: "ADD_TO_CART"; payload: { type: "car" | "house" | "land" | "machine"; item: Car | House | Land | Machine } }
   | { type: "REMOVE_FROM_CART"; payload: string }
   | { type: "UPDATE_CART_QUANTITY"; payload: { id: string; quantity: number } }
@@ -80,8 +84,14 @@ type AppAction =
   | { type: "UPDATE_LAND"; payload: { id: string; updates: Partial<Land> } }
   | { type: "DELETE_LAND"; payload: string }
   | { type: "SET_CARS_LOADING"; payload: boolean }
+  | { type: "SET_HOUSES_LOADING"; payload: boolean }
+  | { type: "SET_LANDS_LOADING"; payload: boolean }
+  | { type: "SET_MACHINES_LOADING"; payload: boolean }
 
 interface AppContextType extends AppState {
+  user: User | null
+  isAuthenticated: boolean
+  authLoading: boolean
   dispatch: React.Dispatch<AppAction>
   addToCart: (type: "car" | "house" | "land" | "machine", item: Car | House | Land | Machine) => void
   removeFromCart: (id: string) => void
@@ -91,10 +101,6 @@ interface AppContextType extends AppState {
   toggleFavorite: (type: "car" | "house" | "land" | "machine", item: Car | House | Land | Machine) => void
   isFavorite: (itemId: string) => boolean
   setIsAuthModalOpen: (open: boolean) => void
-  handleLogin: (email: string, password: string) => Promise<boolean>
-  handleRegister: (name: string, email: string, password: string) => Promise<boolean>
-  handleLogout: () => void
-  handleAuth: (user: User) => void
   createDeal: (
     itemType: "car" | "house" | "land" | "machine",
     item: Car | House | Land | Machine,
@@ -117,14 +123,15 @@ interface AppContextType extends AppState {
   updateLand: (id: string, updates: Partial<Land>) => void
   deleteLand: (id: string) => void
   refreshCars: () => Promise<void>
+  refreshHouses: () => Promise<void>
+  refreshLands: () => Promise<void>
+  refreshMachines: () => Promise<void>
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
-    case "SET_USER":
-      return { ...state, user: action.payload }
     case "SET_CART":
       return { ...state, cart: action.payload || [] }
     case "ADD_TO_CART":
@@ -235,24 +242,34 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, lands: state.lands.filter((land) => land.id !== action.payload) }
     case "SET_CARS_LOADING":
       return { ...state, carsLoading: action.payload }
+    case "SET_HOUSES_LOADING":
+      return { ...state, housesLoading: action.payload }
+    case "SET_LANDS_LOADING":
+      return { ...state, landsLoading: action.payload }
+    case "SET_MACHINES_LOADING":
+      return { ...state, machinesLoading: action.payload }
     default:
       return state
   }
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const auth = useAuth()
+
   const [state, dispatch] = useReducer(appReducer, {
-    user: null,
     cart: [],
     favorites: [],
     deals: [],
     soldItems: new Set(),
     isAuthModalOpen: false,
     cars: [],
-    houses: houses,
-    machines: MACHINES_DATA,
-    lands: LANDS_DATA,
+    houses: [],
+    machines: [],
+    lands: [],
     carsLoading: false,
+    housesLoading: false,
+    landsLoading: false,
+    machinesLoading: false,
   })
 
   const loadCarsFromAPI = async () => {
@@ -299,8 +316,152 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const loadHousesFromAPI = async () => {
+    dispatch({ type: "SET_HOUSES_LOADING", payload: true })
+    try {
+      const apiHouses = await fetchProperties()
+
+      const savedHouses = localStorage.getItem("housesData")
+      let adminHouses: House[] = []
+      if (savedHouses) {
+        try {
+          const parsedHouses = JSON.parse(savedHouses)
+          if (Array.isArray(parsedHouses)) {
+            adminHouses = parsedHouses
+          }
+        } catch (error) {
+          console.error("Error parsing saved houses:", error)
+        }
+      }
+
+      const allHouses = [...apiHouses]
+      adminHouses.forEach((adminHouse) => {
+        if (!allHouses.find((house) => house.id === adminHouse.id)) {
+          allHouses.push(adminHouse)
+        }
+      })
+
+      dispatch({ type: "SET_HOUSES", payload: allHouses })
+    } catch (error) {
+      console.error("Error loading houses from API:", error)
+      const savedHouses = localStorage.getItem("housesData")
+      if (savedHouses) {
+        try {
+          const parsedHouses = JSON.parse(savedHouses)
+          if (Array.isArray(parsedHouses)) {
+            dispatch({ type: "SET_HOUSES", payload: parsedHouses })
+          }
+        } catch (error) {
+          console.error("Error parsing saved houses:", error)
+        }
+      }
+    } finally {
+      dispatch({ type: "SET_HOUSES_LOADING", payload: false })
+    }
+  }
+
+  const loadLandsFromAPI = async () => {
+    dispatch({ type: "SET_LANDS_LOADING", payload: true })
+    try {
+      const apiLands = await fetchLands()
+
+      const savedLands = localStorage.getItem("landsData")
+      let adminLands: Land[] = []
+      if (savedLands) {
+        try {
+          const parsedLands = JSON.parse(savedLands)
+          if (Array.isArray(parsedLands)) {
+            adminLands = parsedLands
+          }
+        } catch (error) {
+          console.error("Error parsing saved lands:", error)
+        }
+      }
+
+      const allLands = [...apiLands]
+      adminLands.forEach((adminLand) => {
+        if (!allLands.find((land) => land.id === adminLand.id)) {
+          allLands.push(adminLand)
+        }
+      })
+
+      dispatch({ type: "SET_LANDS", payload: allLands })
+    } catch (error) {
+      console.error("Error loading lands from API:", error)
+      const savedLands = localStorage.getItem("landsData")
+      if (savedLands) {
+        try {
+          const parsedLands = JSON.parse(savedLands)
+          if (Array.isArray(parsedLands)) {
+            dispatch({ type: "SET_LANDS", payload: parsedLands })
+          }
+        } catch (error) {
+          console.error("Error parsing saved lands:", error)
+        }
+      }
+    } finally {
+      dispatch({ type: "SET_LANDS_LOADING", payload: false })
+    }
+  }
+
+  const loadMachinesFromAPI = async () => {
+    dispatch({ type: "SET_MACHINES_LOADING", payload: true })
+    try {
+      const apiMachines = await fetchMachines()
+
+      const savedMachines = localStorage.getItem("machinesData")
+      let adminMachines: Machine[] = []
+      if (savedMachines) {
+        try {
+          const parsedMachines = JSON.parse(savedMachines)
+          if (Array.isArray(parsedMachines)) {
+            adminMachines = parsedMachines
+          }
+        } catch (error) {
+          console.error("Error parsing saved machines:", error)
+        }
+      }
+
+      const allMachines = [...apiMachines]
+      adminMachines.forEach((adminMachine) => {
+        if (!allMachines.find((machine) => machine.id === adminMachine.id)) {
+          allMachines.push(adminMachine)
+        }
+      })
+
+      dispatch({ type: "SET_MACHINES", payload: allMachines })
+    } catch (error) {
+      console.error("Error loading machines from API:", error)
+      const savedMachines = localStorage.getItem("machinesData")
+      if (savedMachines) {
+        try {
+          const parsedMachines = JSON.parse(savedMachines)
+          if (Array.isArray(parsedMachines)) {
+            dispatch({ type: "SET_MACHINES", payload: parsedMachines })
+          }
+        } catch (error) {
+          console.error("Error parsing saved machines:", error)
+        }
+      }
+    } finally {
+      dispatch({ type: "SET_MACHINES_LOADING", payload: false })
+    }
+  }
+
   const refreshCars = async () => {
     await loadCarsFromAPI()
+  }
+
+  const refreshHouses = async () => {
+    await loadHousesFromAPI()
+  }
+
+  const refreshLands = async () => {
+    await loadLandsFromAPI()
+  }
+
+  const refreshMachines = async () => {
+    await loadMachinesFromAPI()
   }
 
   const addToCart = (type: "car" | "house" | "land" | "machine", item: Car | House | Land | Machine) => {
@@ -341,74 +502,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "SET_AUTH_MODAL", payload: open })
   }
 
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
-    try {
-      if (email && password) {
-        const mockUser: User = {
-          id: "1",
-          name: email.split("@")[0],
-          email,
-          role: email.includes("admin") ? "admin" : "user",
-          avatar: "/placeholder.svg?height=40&width=40",
-        }
-        dispatch({ type: "SET_USER", payload: mockUser })
-        localStorage.setItem("mockUser", JSON.stringify(mockUser))
-        return true
-      }
-      return false
-    } catch (error) {
-      console.error("Login error:", error)
-      return false
-    }
-  }
-
-  const handleRegister = async (name: string, email: string, password: string): Promise<boolean> => {
-    try {
-      if (name && email && password) {
-        const mockUser: User = {
-          id: Date.now().toString(),
-          name,
-          email,
-          role: "user",
-          avatar: "/placeholder.svg?height=40&width=40",
-        }
-        dispatch({ type: "SET_USER", payload: mockUser })
-        localStorage.setItem("mockUser", JSON.stringify(mockUser))
-        return true
-      }
-      return false
-    } catch (error) {
-      console.error("Registration error:", error)
-      return false
-    }
-  }
-
-  const handleLogout = () => {
-    dispatch({ type: "SET_USER", payload: null })
-    localStorage.removeItem("mockUser")
-  }
-
-  const handleAuth = (user: User) => {
-    dispatch({ type: "SET_USER", payload: user })
-    localStorage.setItem("mockUser", JSON.stringify(user))
-    setIsAuthModalOpen(false)
-  }
-
   const createDeal = (
     itemType: "car" | "house" | "land" | "machine",
     item: Car | House | Land | Machine,
     message: string,
   ) => {
-    if (!state.user) return
+    if (!auth.user) return
 
     const newDeal: Deal = {
       id: `deal-${Date.now()}`,
       itemId: item.id,
       item,
       itemType,
-      userId: state.user.id,
-      userName: state.user.name,
-      userEmail: state.user.email,
+      userId: auth.user._id,
+      userName: auth.user.fullName,
+      userEmail: auth.user.email,
       originalPrice: item.price,
       message,
       status: "pending",
@@ -445,147 +553,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   const getUserDeals = () => {
-    if (!state.user) return []
-    return state.deals.filter((deal) => deal.userId === state.user.id)
+    if (!auth.user) return []
+    return state.deals.filter((deal) => deal.userId === auth.user._id)
   }
 
   const getAdminDeals = () => {
     return state.deals
   }
-
-  useEffect(() => {
-    try {
-      const mockUser = localStorage.getItem("mockUser")
-      if (mockUser) {
-        dispatch({ type: "SET_USER", payload: JSON.parse(mockUser) })
-      }
-
-      const savedCart = localStorage.getItem("userCart")
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart)
-        if (Array.isArray(parsedCart)) {
-          dispatch({ type: "SET_CART", payload: parsedCart })
-        }
-      }
-
-      const savedFavorites = localStorage.getItem("userFavorites")
-      if (savedFavorites) {
-        const parsedFavorites = JSON.parse(savedFavorites)
-        if (Array.isArray(parsedFavorites)) {
-          dispatch({ type: "SET_FAVORITES", payload: parsedFavorites })
-        }
-      }
-
-      const savedDeals = localStorage.getItem("deals")
-      if (savedDeals) {
-        const parsedDeals = JSON.parse(savedDeals)
-        if (Array.isArray(parsedDeals)) {
-          dispatch({ type: "SET_DEALS", payload: parsedDeals })
-        }
-      }
-
-      loadCarsFromAPI()
-
-      const savedHouses = localStorage.getItem("housesData")
-      if (savedHouses) {
-        const parsedHouses = JSON.parse(savedHouses)
-        if (Array.isArray(parsedHouses)) {
-          const mergedHouses = [...houses]
-          parsedHouses.forEach((savedHouse: House) => {
-            if (!mergedHouses.find((house) => house.id === savedHouse.id)) {
-              mergedHouses.push(savedHouse)
-            }
-          })
-          dispatch({ type: "SET_HOUSES", payload: mergedHouses })
-        }
-      }
-
-      const savedMachines = localStorage.getItem("machinesData")
-      if (savedMachines) {
-        const parsedMachines = JSON.parse(savedMachines)
-        if (Array.isArray(parsedMachines)) {
-          const mergedMachines = [...MACHINES_DATA]
-          parsedMachines.forEach((savedMachine: Machine) => {
-            if (!mergedMachines.find((machine) => machine.id === savedMachine.id)) {
-              mergedMachines.push(savedMachine)
-            }
-          })
-          dispatch({ type: "SET_MACHINES", payload: mergedMachines })
-        }
-      }
-
-      const savedLands = localStorage.getItem("landsData")
-      if (savedLands) {
-        const parsedLands = JSON.parse(savedLands)
-        if (Array.isArray(parsedLands)) {
-          const mergedLands = [...LANDS_DATA]
-          parsedLands.forEach((savedLand: Land) => {
-            if (!mergedLands.find((land) => land.id === savedLand.id)) {
-              mergedLands.push(savedLand)
-            }
-          })
-          dispatch({ type: "SET_LANDS", payload: mergedLands })
-        }
-      }
-    } catch (error) {
-      console.error("Error loading data from localStorage:", error)
-    }
-  }, [])
-
-  useEffect(() => {
-    try {
-      const adminCars = state.cars.filter((car) => car.id.toString().startsWith("car-"))
-      if (adminCars.length > 0) {
-        localStorage.setItem("carsData", JSON.stringify(adminCars))
-      }
-    } catch (error) {
-      console.error("Error saving cars to localStorage:", error)
-    }
-  }, [state.cars])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("userCart", JSON.stringify(state.cart || []))
-    } catch (error) {
-      console.error("Error saving cart to localStorage:", error)
-    }
-  }, [state.cart])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("userFavorites", JSON.stringify(state.favorites || []))
-    } catch (error) {
-      console.error("Error saving favorites to localStorage:", error)
-    }
-  }, [state.favorites])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("deals", JSON.stringify(state.deals || []))
-    } catch (error) {
-      console.error("Error saving deals to localStorage:", error)
-    }
-  }, [state.deals])
-
-  useEffect(() => {
-    try {
-      const dynamicMachines = state.machines.filter(
-        (machine) => !MACHINES_DATA.find((staticMachine) => staticMachine.id === machine.id),
-      )
-      localStorage.setItem("machinesData", JSON.stringify(dynamicMachines))
-    } catch (error) {
-      console.error("Error saving machines to localStorage:", error)
-    }
-  }, [state.machines])
-
-  useEffect(() => {
-    try {
-      const dynamicLands = state.lands.filter((land) => !LANDS_DATA.find((staticLand) => staticLand.id === land.id))
-      localStorage.setItem("landsData", JSON.stringify(dynamicLands))
-    } catch (error) {
-      console.error("Error saving lands to localStorage:", error)
-    }
-  }, [state.lands])
 
   const addCar = (car: Car) => {
     dispatch({ type: "ADD_CAR", payload: car })
@@ -635,8 +609,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "DELETE_LAND", payload: id })
   }
 
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem("userCart")
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart)
+        if (Array.isArray(parsedCart)) {
+          dispatch({ type: "SET_CART", payload: parsedCart })
+        }
+      }
+
+      const savedFavorites = localStorage.getItem("userFavorites")
+      if (savedFavorites) {
+        const parsedFavorites = JSON.parse(savedFavorites)
+        if (Array.isArray(parsedFavorites)) {
+          dispatch({ type: "SET_FAVORITES", payload: parsedFavorites })
+        }
+      }
+
+      const savedDeals = localStorage.getItem("deals")
+      if (savedDeals) {
+        const parsedDeals = JSON.parse(savedDeals)
+        if (Array.isArray(parsedDeals)) {
+          dispatch({ type: "SET_DEALS", payload: parsedDeals })
+        }
+      }
+
+      loadCarsFromAPI()
+      loadHousesFromAPI()
+      loadLandsFromAPI()
+      loadMachinesFromAPI()
+
+      const savedMachines = localStorage.getItem("machinesData")
+      if (savedMachines) {
+        const parsedMachines = JSON.parse(savedMachines)
+        if (Array.isArray(parsedMachines)) {
+          const mergedMachines = [...MACHINES_DATA]
+          parsedMachines.forEach((savedMachine: Machine) => {
+            if (!mergedMachines.find((machine) => machine.id === savedMachine.id)) {
+              mergedMachines.push(savedMachine)
+            }
+          })
+          dispatch({ type: "SET_MACHINES", payload: mergedMachines })
+        }
+      }
+    } catch (error) {
+      console.error("Error loading data from localStorage:", error)
+    }
+  }, [])
+
   const value: AppContextType = {
     ...state,
+    user: auth.user,
+    isAuthenticated: auth.isAuthenticated,
+    authLoading: auth.loading,
     dispatch,
     addToCart,
     removeFromCart,
@@ -646,10 +672,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleFavorite,
     isFavorite,
     setIsAuthModalOpen,
-    handleLogin,
-    handleRegister,
-    handleLogout,
-    handleAuth,
     createDeal,
     updateDealStatus,
     getPendingDealsCount,
@@ -668,6 +690,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateLand,
     deleteLand,
     refreshCars,
+    refreshHouses,
+    refreshLands,
+    refreshMachines,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

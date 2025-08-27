@@ -13,7 +13,7 @@ import type { Machine } from "@/types"
 import { useApp } from "@/context/app-context"
 
 export function MachineListings() {
-  const { machines } = useApp()
+  const { machines, machinesLoading } = useApp()
   const [filteredMachines, setFilteredMachines] = React.useState<Machine[]>(machines)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
@@ -38,7 +38,9 @@ export function MachineListings() {
           (machine.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
           (machine.brand?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
           (machine.model?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-          (machine.location?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
+          (machine.location?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (machine.category?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (machine.subcategory?.toLowerCase() || "").includes(searchQuery.toLowerCase()),
       )
     }
 
@@ -61,7 +63,9 @@ export function MachineListings() {
 
     // Machine type filter
     if (filters.machineType !== "all") {
-      filtered = filtered.filter((machine) => machine.machineType === filters.machineType)
+      filtered = filtered.filter(
+        (machine) => machine.category === filters.machineType || machine.machineType === filters.machineType,
+      )
     }
 
     // Brand filter
@@ -132,7 +136,7 @@ export function MachineListings() {
 
             <div className="flex justify-center space-x-4">
               <Badge variant="secondary" className="bg-green-500 text-white px-3 py-1 text-sm">
-                {machines.length} Machines Available
+                {machinesLoading ? "Loading..." : `${machines.length} Machines Available`}
               </Badge>
               <Badge variant="secondary" className="bg-white/20 text-white px-3 py-1 text-sm">
                 Certified Equipment
@@ -274,12 +278,28 @@ export function MachineListings() {
         {/* Results Count */}
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
-            Showing {filteredMachines.length} of {machines.length} machines
+            {machinesLoading
+              ? "Loading machines..."
+              : `Showing ${filteredMachines.length} of ${machines.length} machines`}
           </p>
         </div>
 
         {/* Machines Grid/List */}
-        {filteredMachines.length > 0 ? (
+        {machinesLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, index) => (
+              <Card key={index} className="animate-pulse">
+                <CardContent className="p-4">
+                  <div className="aspect-[4/3] bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredMachines.length > 0 ? (
           <div
             className={`${viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}`}
           >

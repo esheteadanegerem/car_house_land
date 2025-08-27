@@ -8,7 +8,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">Ethiopia PropertyAuto</h3>
+            <h3 className="text-xl font-bold">MasGebeya PLC</h3>
             <p className="text-gray-300 text-sm leading-relaxed">
               Your trusted platform for buying, selling, and renting vehicles, properties, and land in Ethiopia.
             </p>
@@ -72,14 +72,14 @@ export function Footer() {
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">info@ethiopiapropertyauto.com</span>
+                <span className="text-gray-300 text-sm">info@MasGebeya.com</span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-          <p className="text-gray-400 text-sm">© 2024 Ethiopia PropertyAuto. All rights reserved.</p>
+          <p className="text-gray-400 text-sm">© 2025 MasGebeya PLC . All rights reserved.</p>
         </div>
       </div>
     </footer>

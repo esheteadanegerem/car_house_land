@@ -7,15 +7,17 @@ import { Menu, X, ShoppingCart, User, LogOut, HomeIcon, MessageSquare, Shield } 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
+import { useAuth } from "@/hooks/use-auth"
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
-  const { user, cart = [], handleLogout, setIsAuthModalOpen } = useApp()
+  const { cart = [], setIsAuthModalOpen } = useApp()
+  const { user, logout } = useAuth()
 
   useEffect(() => {
     setIsMobileMenuOpen(false)
-  }, [user?.id])
+  }, [user?._id])
 
   const regularNavItems = [
     { href: "/", label: "Home", icon: HomeIcon },
@@ -38,6 +40,11 @@ export function Navigation() {
   }
 
   const cartItemCount = Array.isArray(cart) ? cart.length : 0
+
+  const handleLogout = async () => {
+    setIsMobileMenuOpen(false)
+    await logout()
+  }
 
   return (
     <nav className="bg-white/95 backdrop-blur-md border-b border-border/50 fixed top-0 left-0 right-0 z-50 shadow-sm animate-in slide-in-from-top duration-300">
@@ -118,7 +125,7 @@ export function Navigation() {
                     className="flex items-center space-x-1 lg:space-x-2 hover:scale-105 transition-all duration-300 hover:bg-blue-500/10 hover:text-blue-500 font-medium px-2 lg:px-3"
                   >
                     <User className="w-4 h-4" />
-                    <span className="hidden lg:inline text-sm max-w-20 truncate">{user.name}</span>
+                    <span className="hidden lg:inline text-sm max-w-20 truncate">{user.fullName}</span>
                     {user.role === "admin" && <Shield className="w-3 h-3" />}
                   </Button>
                 </Link>
@@ -222,7 +229,7 @@ export function Navigation() {
                         className="w-full justify-start hover:scale-105 transition-all duration-300 hover:bg-blue-500/10 hover:text-blue-500 font-medium py-2.5"
                       >
                         <User className="w-4 h-4 mr-3" />
-                        <span className="text-sm truncate">{user.name}</span>
+                        <span className="text-sm truncate">{user.fullName}</span>
                         {user.role === "admin" && <Shield className="w-3 h-3 ml-2" />}
                       </Button>
                     </Link>
@@ -232,7 +239,6 @@ export function Navigation() {
                       className="w-full justify-start hover:scale-105 transition-all duration-300 hover:text-red-500 hover:bg-red-500/10 font-medium py-2.5"
                       onClick={() => {
                         handleLogout()
-                        setIsMobileMenuOpen(false)
                       }}
                     >
                       <LogOut className="w-4 h-4 mr-3" />

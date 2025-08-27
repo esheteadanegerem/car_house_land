@@ -7,19 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import {
-  ArrowLeft,
-  Star,
-  MapPin,
-  Square,
-  Droplets,
-  Zap,
-  Phone,
-  Mail,
-  MessageCircle,
-  Heart,
-  ShoppingCart,
-} from "lucide-react"
+import { ArrowLeft, Star, MapPin, Square, Droplets, Zap, Phone, Mail, MessageCircle, ShoppingCart } from "lucide-react"
 import { useApp } from "@/context/app-context"
 
 interface LandDetailProps {
@@ -27,12 +15,13 @@ interface LandDetailProps {
 }
 
 export function LandDetail({ landId }: LandDetailProps) {
-  const { lands, dispatch } = useApp()
+  const { lands, dispatch, landsLoading } = useApp() // Added landsLoading from context
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   const land = lands?.find((l) => l.id === landId || l.id === String(landId) || String(l.id) === landId)
 
-  if (!lands) {
+  if (landsLoading || !lands) {
+    // Updated loading condition
     return (
       <div className="min-h-screen bg-gray-50 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -128,59 +117,87 @@ export function LandDetail({ landId }: LandDetailProps) {
 
             {/* Land Details */}
             <Card>
-              <CardHeader>
-                <CardTitle>Land Details</CardTitle>
+              <CardHeader className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-b border-yellow-200">
+                <CardTitle className="text-xl font-bold text-yellow-800">Land Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Square className="w-5 h-5 text-yellow-600" />
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Square className="w-6 h-6 text-yellow-600" />
                     <div>
-                      <p className="text-sm text-gray-600">Size</p>
-                      <p className="font-semibold">{land.size} acres</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Size</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {land.size} {land.sizeUnit || "hectares"}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Zap className="w-5 h-5 text-yellow-600" />
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Zap className="w-6 h-6 text-yellow-600" />
                     <div>
-                      <p className="text-sm text-gray-600">Zoning</p>
-                      <p className="font-semibold capitalize">{land.zoning}</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Zoning</p>
+                      <p className="text-lg font-bold text-gray-900 capitalize">{land.zoning}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Droplets className="w-5 h-5 text-yellow-600" />
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Droplets className="w-6 h-6 text-yellow-600" />
                     <div>
-                      <p className="text-sm text-gray-600">Water Access</p>
-                      <p className="font-semibold">{land.waterAccess ? "Yes" : "No"}</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Water Access</p>
+                      <p className="text-lg font-bold text-gray-900 capitalize">{land.waterAccess}</p>
                     </div>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="my-6" />
 
-                <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-gray-600 leading-relaxed">{land.description}</p>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <MapPin className="w-5 h-5 text-yellow-600 mr-2" />
+                    Location Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm font-medium text-gray-600">City:</span>
+                      <span className="text-sm font-bold text-gray-900">{land.city}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-sm font-medium text-gray-600">Region:</span>
+                      <span className="text-sm font-bold text-gray-900">{land.region}</span>
+                    </div>
+                    {land.zone && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-sm font-medium text-gray-600">Zone:</span>
+                        <span className="text-sm font-bold text-gray-900">{land.zone}</span>
+                      </div>
+                    )}
+                    {land.kebele && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-sm font-medium text-gray-600">Kebele:</span>
+                        <span className="text-sm font-bold text-gray-900">{land.kebele}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold mb-2">Soil Type</h3>
-                  <p className="text-gray-600">{land.soilType}</p>
-                </div>
+                <Separator className="my-6" />
 
                 <div>
-                  <h3 className="font-semibold mb-2">Development Potential</h3>
-                  <p className="text-gray-600">{land.developmentPotential}</p>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Description</h3>
+                  <p className="text-gray-700 leading-relaxed text-base bg-gray-50 p-4 rounded-lg">
+                    {land.description}
+                  </p>
                 </div>
 
-                {land.utilities && land.utilities.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Available Utilities</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {land.utilities.map((utility, index) => (
-                        <Badge key={index} variant="outline">
-                          {utility}
-                        </Badge>
+                {land.nearbyAmenities && land.nearbyAmenities.length > 0 && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 className="text-lg font-bold text-blue-800 mb-3">Nearby Amenities</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {land.nearbyAmenities.map((amenity, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-white rounded border">
+                          <span className="text-sm font-medium text-gray-900 capitalize">
+                            {amenity.name} ({amenity.type})
+                          </span>
+                          <span className="text-sm font-bold text-blue-600">{amenity.distance}km</span>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -211,10 +228,6 @@ export function LandDetail({ landId }: LandDetailProps) {
                   <Button className="w-full" size="lg" onClick={handleAddToCart}>
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     Add to Cart
-                  </Button>
-                  <Button variant="outline" className="w-full bg-transparent">
-                    <Heart className="w-4 h-4 mr-2" />
-                    Save Land
                   </Button>
                 </div>
               </CardContent>

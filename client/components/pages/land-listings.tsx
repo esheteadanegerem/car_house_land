@@ -12,7 +12,7 @@ import { useApp } from "@/context/app-context"
 import type { Land } from "@/types"
 
 export function LandListings() {
-  const { lands } = useApp()
+  const { lands, landsLoading } = useApp() // Added landsLoading from context
   const [filteredLands, setFilteredLands] = React.useState<Land[]>(lands)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [showMobileFilters, setShowMobileFilters] = React.useState(false)
@@ -223,12 +223,26 @@ export function LandListings() {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-muted-foreground">
-            Showing {filteredLands.length} of {lands.length} land plots
+            {landsLoading ? "Loading..." : `Showing ${filteredLands.length} of ${lands.length} land plots`}{" "}
+            {/* Added loading state */}
           </p>
         </div>
 
         {/* Lands Grid */}
-        {filteredLands.length > 0 ? (
+        {landsLoading ? ( // Added loading state display
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <div className="aspect-[4/3] bg-gray-200 rounded-t-lg" />
+                <CardContent className="p-4 space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                  <div className="h-4 bg-gray-200 rounded w-2/3" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredLands.length > 0 ? (
           <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
             {filteredLands.map((land) => (
               <ItemCard key={land.id} item={land} type="land" />

@@ -32,12 +32,21 @@ export function CarDetail({ carId }: CarDetailProps) {
         return
       }
 
+      console.log("[v0] Loading car with ID:", carId)
+
+      if (!carId || carId.trim() === "") {
+        console.error("[v0] Invalid carId provided to CarDetail component")
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       try {
-        const fetchedCar = await fetchCarById(carId)
+        const fetchedCar = await fetchCarById(carId.trim())
+        console.log("[v0] Fetched car:", fetchedCar)
         setApiCar(fetchedCar)
       } catch (error) {
-        console.error("Error fetching car:", error)
+        console.error("[v0] Error fetching car:", error)
       } finally {
         setLoading(false)
       }
@@ -219,28 +228,33 @@ export function CarDetail({ carId }: CarDetailProps) {
             )}
 
             {/* Location Details */}
-            <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg">Location Details</CardTitle>
+            <Card className="shadow-sm border-gray-200">
+              <CardHeader className="pb-3 sm:pb-4 bg-gray-50/50">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
+                  <MapPin className="w-5 h-5 mr-2 text-blue-600" />
+                  Location Details
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between py-1">
-                    <span className="text-muted-foreground text-sm sm:text-base">City:</span>
-                    <span className="font-medium text-sm sm:text-base">{car.city || "N/A"}</span>
+              <CardContent className="pt-4">
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100 last:border-b-0">
+                    <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">City</span>
+                    <span className="text-sm sm:text-base font-semibold text-gray-900">{car.city || "N/A"}</span>
                   </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-muted-foreground text-sm sm:text-base">Region:</span>
-                    <span className="font-medium text-sm sm:text-base">{car.region || "N/A"}</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100 last:border-b-0">
+                    <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">Region</span>
+                    <span className="text-sm sm:text-base font-semibold text-gray-900">{car.region || "N/A"}</span>
                   </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-muted-foreground text-sm sm:text-base">Address:</span>
-                    <span className="font-medium text-sm sm:text-base">{car.address || "N/A"}</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100 last:border-b-0">
+                    <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">Address</span>
+                    <span className="text-sm sm:text-base font-semibold text-gray-900 text-right sm:text-left">
+                      {car.address || "N/A"}
+                    </span>
                   </div>
                   {car.kebele && (
-                    <div className="flex justify-between py-1">
-                      <span className="text-muted-foreground text-sm sm:text-base">Kebele:</span>
-                      <span className="font-medium text-sm sm:text-base">{car.kebele}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between py-2">
+                      <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">Kebele</span>
+                      <span className="text-sm sm:text-base font-semibold text-gray-900">{car.kebele}</span>
                     </div>
                   )}
                 </div>
@@ -248,16 +262,19 @@ export function CarDetail({ carId }: CarDetailProps) {
             </Card>
 
             {/* Specifications */}
-            <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg">Specifications</CardTitle>
+            <Card className="shadow-sm border-gray-200">
+              <CardHeader className="pb-3 sm:pb-4 bg-gray-50/50">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Vehicle Specifications</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {specifications.map((spec, index) => (
-                    <div key={index} className="flex justify-between py-1 sm:py-0">
-                      <span className="text-muted-foreground text-sm sm:text-base">{spec.label}:</span>
-                      <span className="font-medium text-sm sm:text-base">{spec.value}</span>
+                    <div
+                      key={index}
+                      className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100 last:border-b-0"
+                    >
+                      <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">{spec.label}</span>
+                      <span className="text-sm sm:text-base font-semibold text-gray-900">{spec.value}</span>
                     </div>
                   ))}
                 </div>
@@ -265,32 +282,60 @@ export function CarDetail({ carId }: CarDetailProps) {
             </Card>
 
             {/* Description */}
-            <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg">Description</CardTitle>
+            <Card className="shadow-sm border-gray-200">
+              <CardHeader className="pb-3 sm:pb-4 bg-gray-50/50">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Description</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                  {car.description || "No description available."}
-                </p>
+              <CardContent className="pt-4">
+                <div className="prose prose-sm sm:prose-base max-w-none">
+                  <p className="text-gray-700 leading-relaxed text-sm sm:text-base whitespace-pre-wrap">
+                    {car.description || "No description available for this vehicle."}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
+            {/* Features */}
+            {car.features && car.features.length > 0 && (
+              <Card className="shadow-sm border-gray-200">
+                <CardHeader className="pb-3 sm:pb-4 bg-gray-50/50">
+                  <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Features</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="flex flex-wrap gap-2">
+                    {car.features.map((feature, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs sm:text-sm px-3 py-1">
+                        {feature}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Dealer Info */}
-            <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg">Dealer Information</CardTitle>
+            <Card className="shadow-sm border-gray-200">
+              <CardHeader className="pb-3 sm:pb-4 bg-gray-50/50">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Dealer Information</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                  <div>
-                    <h4 className="font-semibold text-sm sm:text-base">
+              <CardContent className="pt-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-1">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900">
                       {car.dealer || car.sellerName || "Unknown Dealer"}
                     </h4>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Authorized Dealer</p>
+                    <p className="text-sm text-gray-600">Authorized Dealer</p>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Star className="w-4 h-4 mr-1 fill-current text-yellow-400" />
+                      <span>4.8 (124 reviews)</span>
+                    </div>
                   </div>
                   {!isSold && user && user.role !== "admin" && (
-                    <Button variant="outline" onClick={() => contactDealer(car)} className="text-sm sm:text-base">
+                    <Button
+                      variant="outline"
+                      onClick={() => contactDealer(car)}
+                      className="text-sm sm:text-base px-6 py-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                    >
                       Contact Dealer
                     </Button>
                   )}
