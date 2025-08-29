@@ -80,14 +80,8 @@ export function useAuth() {
         console.log("[v0] Login successful")
         setUser(response.data.user)
         setIsAuthenticated(true)
-
-        setTimeout(() => {
-          if (response.data?.user.role === "admin") {
-            router.push("/dashboard/admin")
-          } else {
-            router.push("/dashboard/user")
-          }
-        }, 100)
+        await new Promise((resolve) => setTimeout(resolve, 0)); // Ensure state update
+        router.replace(response.data.user.role === "admin" ? "/dashboard/admin" : "/dashboard/user")
       } else {
         console.log("[v0] Login failed:", response.message)
       }
@@ -228,6 +222,22 @@ export function useAuth() {
       return () => clearInterval(interval)
     }
   }, [checkAuth, initializing, isAuthenticated])
+
+  useEffect(() => {
+    const checkSyncHeader = async () => {
+      const response = await fetch("/api/check-auth-sync", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const headers = response.headers;
+      if (headers.get("x-auth-sync") === "pending") {
+        console.log("[v0] Auth sync pending, checking auth...");
+        await checkAuth();
+      }
+    };
+
+    checkSyncHeader();
+  }, [checkAuth]);
 
   return {
     user,

@@ -45,6 +45,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  if (isProtectedRoute && token && !user) {
+    // Indicate client-side sync is needed
+    const response = NextResponse.next()
+    response.headers.set("x-auth-sync", "pending")
+    return response
+  }
+
   // Check role-based access for protected routes
   if (isProtectedRoute && user) {
     const matchedRoute = Object.keys(protectedRoutes).find((route) => pathname.startsWith(route))

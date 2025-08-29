@@ -270,9 +270,11 @@ function SearchParamsHandler({ onAuthRequired }: { onAuthRequired: (required: bo
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const auth = useAuth()
+
+  // Add this useEffect to sync auth state
   useEffect(() => {
     auth.checkAuth(); // Run checkAuth on mount and when isAuthenticated changes
-  }, [auth.checkAuth, auth.isAuthenticated]);
+  }, [auth.checkAuth, auth.isAuthenticated])
 
   const [state, dispatch] = useReducer(appReducer, {
     cart: [],
@@ -786,9 +788,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const parsedMachines = JSON.parse(savedMachines)
         if (Array.isArray(parsedMachines)) {
           const mergedMachines = [...MACHINES_DATA]
-          parsedMachines.forEach((savedMachine: Machine) => {
-            if (!mergedMachines.find((machine) => machine.id === savedMachine.id)) {
-              mergedMachines.push(savedMachine)
+          parsedMachines.forEach((adminMachine: Machine) => {
+            if (!mergedMachines.find((machine) => machine.id === adminMachine.id)) {
+              mergedMachines.push(adminMachine)
             }
           })
           dispatch({ type: "SET_MACHINES", payload: mergedMachines })
@@ -827,7 +829,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshMachines,
     refreshDeals,
     getPendingDealsCount: () => state.deals.filter((deal) => deal.status === "pending").length,
-    getUserDeals: () => (auth.user ? state.deals.filter((deal) => deal.userId === auth.user._id) : []),
+    getUserDeals: () => (auth.user ? state.deals.filter((deal) => deal.buyer._id === auth.user._id) : []),
     getAdminDeals: () => state.deals,
     addCar,
     updateCar,

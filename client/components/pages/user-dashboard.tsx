@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,6 +13,18 @@ import { useApp } from "@/context/app-context"
 export function UserDashboard() {
   const { user, cart, favorites, setIsAuthModalOpen } = useApp()
   const [activeTab, setActiveTab] = useState("orders")
+  const router = useRouter()
+
+  useEffect(() => {
+    console.log("[UserDashboard] User state:", user);
+    if (user && user.role) {
+      const targetPath = user.role === "admin" ? "/dashboard/admin" : "/dashboard/user";
+      if (router.pathname !== targetPath) {
+        console.log("[UserDashboard] Redirecting to:", targetPath);
+        router.replace(targetPath);
+      }
+    }
+  }, [user, router])
 
   if (!user) {
     return (
