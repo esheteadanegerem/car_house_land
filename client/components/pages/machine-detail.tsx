@@ -253,6 +253,10 @@ export function MachineDetail({ machineId }: MachineDetailProps) {
                         : machine.location || "Location not specified"}
                     </span>
                   </div>
+                  <div className="flex items-center justify-center space-x-1 text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span>Posted: {machine.createdAt ? new Date(machine.createdAt).toLocaleDateString() : "N/A"}</span>
+                  </div>
                 </div>
 
                 <div className="space-y-3">

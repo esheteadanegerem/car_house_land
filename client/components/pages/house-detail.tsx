@@ -254,6 +254,12 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
                       {house.city}, {house.region}
                     </span>
                   </div>
+                  <div className="flex items-center justify-center space-x-1 text-gray-600">
+                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="text-sm sm:text-base">
+                      Posted: {house.createdAt ? new Date(house.createdAt).toLocaleDateString() : "N/A"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-2 sm:space-y-3">

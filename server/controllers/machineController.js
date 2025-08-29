@@ -36,7 +36,7 @@ const createMachine = asyncHandler(async (req, res) => {
     zone,
     owner,
     status,
-    type, // Added type to destructuring
+    type, //  type to destructuring added ... this fucking bug hussles me
   } = req.body;
 
   // Validate required fields

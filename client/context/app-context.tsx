@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, Suspense } from "react"
 import type React from "react"
 import { createContext, useContext, useReducer, type ReactNode } from "react"
+import { useSearchParams } from "next/navigation"
 import type { Car, House, Land, Machine, Deal } from "@/types"
 import { fetchCars } from "@/lib/api/cars"
 import { fetchProperties } from "@/lib/api/properties"
@@ -11,6 +12,8 @@ import { fetchMachines } from "@/lib/api/machines"
 import { MACHINES_DATA } from "@/lib/data/machines"
 import { useAuth } from "@/hooks/use-auth"
 import type { User } from "@/lib/auth"
+import { fetchDeals, createDeal as apiCreateDeal, updateDealStatus as apiUpdateDealStatus } from "@/lib/api/deals"
+import { mapApiDealToLocal } from "@/lib/utils/mappers"
 
 interface AppState {
   cart: Array<{
@@ -105,8 +108,8 @@ interface AppContextType extends AppState {
     itemType: "car" | "house" | "land" | "machine",
     item: Car | House | Land | Machine,
     message: string,
-  ) => void
-  updateDealStatus: (dealId: string, status: Deal["status"]) => void
+  ) => Promise<void>
+  updateDealStatus: (dealId: string, status: Deal["status"], cancellationReason?: string) => Promise<void>
   getPendingDealsCount: () => number
   getUserDeals: () => Deal[]
   getAdminDeals: () => Deal[]
@@ -126,6 +129,7 @@ interface AppContextType extends AppState {
   refreshHouses: () => Promise<void>
   refreshLands: () => Promise<void>
   refreshMachines: () => Promise<void>
+  refreshDeals: () => Promise<void>
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -253,8 +257,22 @@ function appReducer(state: AppState, action: AppAction): AppState {
   }
 }
 
+function SearchParamsHandler({ onAuthRequired }: { onAuthRequired: (required: boolean) => void }) {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const authRequired = searchParams.get("auth") === "required"
+    onAuthRequired(authRequired)
+  }, [searchParams, onAuthRequired])
+
+  return null
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const auth = useAuth()
+  useEffect(() => {
+    auth.checkAuth(); // Run checkAuth on mount and when isAuthenticated changes
+  }, [auth.checkAuth, auth.isAuthenticated]);
 
   const [state, dispatch] = useReducer(appReducer, {
     cart: [],
@@ -271,6 +289,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     landsLoading: false,
     machinesLoading: false,
   })
+
+  const handleAuthRequired = (required: boolean) => {
+    if (required && !auth.isAuthenticated && !auth.loading) {
+      console.log("[v0] Middleware requires authentication, opening auth modal")
+      dispatch({ type: "SET_AUTH_MODAL", payload: true })
+    }
+  }
 
   const loadCarsFromAPI = async () => {
     dispatch({ type: "SET_CARS_LOADING", payload: true })
@@ -500,28 +525,124 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setIsAuthModalOpen = (open: boolean) => {
     dispatch({ type: "SET_AUTH_MODAL", payload: open })
+
+    if (!open && typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      if (url.searchParams.get("auth") === "required") {
+        url.searchParams.delete("auth")
+        window.history.replaceState({}, "", url.toString())
+      }
+    }
   }
 
-  const createDeal = (
+  const loadDealsFromAPI = async () => {
+    if (!auth.user) return
+
+    try {
+      const apiDeals = await fetchDeals()
+      const mappedDeals = apiDeals.map(mapApiDealToLocal)
+      dispatch({ type: "SET_DEALS", payload: mappedDeals })
+    } catch (error) {
+      console.error("Error loading deals from API:", error)
+      // Fallback to localStorage
+      const savedDeals = localStorage.getItem("deals")
+      if (savedDeals) {
+        try {
+          const parsedDeals = JSON.parse(savedDeals)
+          if (Array.isArray(parsedDeals)) {
+            dispatch({ type: "SET_DEALS", payload: parsedDeals })
+          }
+        } catch (error) {
+          console.error("Error parsing saved deals:", error)
+        }
+      }
+    }
+  }
+
+  const createDeal = async (
     itemType: "car" | "house" | "land" | "machine",
     item: Car | House | Land | Machine,
     message: string,
   ) => {
-    if (!auth.user) return
+    if (!auth.user) {
+      console.log("[v0] User not authenticated, cannot create deal")
+      return
+    }
 
+    console.log("[v0] Creating deal for item:", item.id, "type:", itemType)
+
+    try {
+      // Map item type to backend format
+      const backendItemType =
+        itemType === "house"
+          ? "Property"
+          : ((itemType.charAt(0).toUpperCase() + itemType.slice(1)) as "Car" | "Property" | "Land" | "Machine")
+
+      const dealData = {
+        item: item.id,
+        itemType: backendItemType,
+        buyer: auth.user._id,
+        seller: item.sellerId || item.sellerName || "default-seller", // Better fallback for seller
+        message,
+        dealType: "inquiry",
+      }
+
+      console.log("[v0] Attempting API call with data:", dealData)
+      const newDeal = await apiCreateDeal(dealData)
+
+      if (newDeal) {
+        console.log("[v0] Deal created successfully via API:", newDeal)
+        const mappedDeal = mapApiDealToLocal(newDeal)
+        dispatch({ type: "ADD_DEAL", payload: mappedDeal })
+
+        // Also save to localStorage as backup
+        const updatedDeals = [...state.deals, mappedDeal]
+        localStorage.setItem("deals", JSON.stringify(updatedDeals))
+        return
+      }
+    } catch (error) {
+      console.error("[v0] API call failed, using local fallback:", error)
+    }
+
+    console.log("[v0] Creating deal locally as fallback")
+    const dealId = `deal-${Date.now()}`
     const newDeal: Deal = {
-      id: `deal-${Date.now()}`,
-      itemId: item.id,
-      item,
-      itemType,
-      userId: auth.user._id,
-      userName: auth.user.fullName,
-      userEmail: auth.user.email,
-      originalPrice: item.price,
+      _id: dealId,
+      id: dealId,
+      dealId: `DEAL-${Date.now()}`,
+      buyer: {
+        _id: auth.user._id,
+        fullName: auth.user.fullName,
+        email: auth.user.email,
+        phone: auth.user.phone,
+      },
+      seller: {
+        _id: item.sellerId || "default-seller",
+        fullName: item.sellerName || "Property Owner",
+        email: item.sellerEmail || "seller@example.com",
+        phone: item.sellerPhone || "+251-911-000-000",
+      },
+      item: {
+        _id: item.id,
+        title: item.title,
+        price: item.price,
+        images: item.images || [],
+        description: item.description || "",
+        location: item.location,
+      },
+      itemType: itemType === "house" ? "Property" : itemType.charAt(0).toUpperCase() + itemType.slice(1),
       message,
+      originalPrice: item.price,
       status: "pending",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+
+      // Legacy compatibility
+      itemId: item.id,
+      userId: auth.user._id,
+      userName: auth.user.fullName,
+      userEmail: auth.user.email,
+      userPhone: auth.user.phone,
       chatHistory: [],
       adminInfo: {
         name: "Alemayehu Bekele",
@@ -533,32 +654,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     dispatch({ type: "ADD_DEAL", payload: newDeal })
+
+    const updatedDeals = [...state.deals, newDeal]
+    localStorage.setItem("deals", JSON.stringify(updatedDeals))
+
+    console.log("[v0] Deal created locally:", newDeal)
   }
 
-  const updateDealStatus = (dealId: string, status: Deal["status"]) => {
-    dispatch({
-      type: "UPDATE_DEAL",
-      payload: {
-        id: dealId,
-        updates: {
-          status,
-          updatedAt: new Date().toISOString(),
+  const updateDealStatus = async (dealId: string, status: Deal["status"], cancellationReason?: string) => {
+    try {
+      const statusData = { status, cancellationReason }
+      const updatedDeal = await apiUpdateDealStatus(dealId, statusData)
+
+      if (updatedDeal) {
+        const mappedDeal = mapApiDealToLocal(updatedDeal)
+        dispatch({
+          type: "UPDATE_DEAL",
+          payload: {
+            id: dealId,
+            updates: mappedDeal,
+          },
+        })
+      }
+    } catch (error) {
+      console.error("Error updating deal status:", error)
+
+      // Fallback to local update
+      dispatch({
+        type: "UPDATE_DEAL",
+        payload: {
+          id: dealId,
+          updates: {
+            status,
+            updatedAt: new Date().toISOString(),
+            ...(status === "completed" && { completedAt: new Date().toISOString() }),
+            ...(status === "cancelled" && {
+              cancelledAt: new Date().toISOString(),
+              cancellationReason: cancellationReason || "No reason provided",
+            }),
+          },
         },
-      },
-    })
+      })
+    }
   }
 
-  const getPendingDealsCount = () => {
-    return state.deals.filter((deal) => deal.status === "pending").length
-  }
-
-  const getUserDeals = () => {
-    if (!auth.user) return []
-    return state.deals.filter((deal) => deal.userId === auth.user._id)
-  }
-
-  const getAdminDeals = () => {
-    return state.deals
+  const refreshDeals = async () => {
+    await loadDealsFromAPI()
   }
 
   const addCar = (car: Car) => {
@@ -658,6 +799,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (auth.user) {
+      loadDealsFromAPI()
+    }
+  }, [auth.user])
+
   const value: AppContextType = {
     ...state,
     user: auth.user,
@@ -674,9 +821,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsAuthModalOpen,
     createDeal,
     updateDealStatus,
-    getPendingDealsCount,
-    getUserDeals,
-    getAdminDeals,
+    refreshCars,
+    refreshHouses,
+    refreshLands,
+    refreshMachines,
+    refreshDeals,
+    getPendingDealsCount: () => state.deals.filter((deal) => deal.status === "pending").length,
+    getUserDeals: () => (auth.user ? state.deals.filter((deal) => deal.userId === auth.user._id) : []),
+    getAdminDeals: () => state.deals,
     addCar,
     updateCar,
     deleteCar,
@@ -689,13 +841,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addLand,
     updateLand,
     deleteLand,
-    refreshCars,
-    refreshHouses,
-    refreshLands,
-    refreshMachines,
   }
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
+  return (
+    <AppContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <SearchParamsHandler onAuthRequired={handleAuthRequired} />
+      </Suspense>
+      {children}
+    </AppContext.Provider>
+  )
 }
 
 export function useApp() {

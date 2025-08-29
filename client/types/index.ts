@@ -39,21 +39,56 @@ export interface CartItem {
 }
 
 export interface Deal {
-  id: string
+  _id: string
+  id: string // For compatibility with existing code
+  dealId?: string // Auto-generated deal ID from backend
+
+  // Buyer and Seller
+  buyer: {
+    _id: string
+    fullName: string
+    email: string
+    phone?: string
+  }
+  seller: {
+    _id: string
+    fullName: string
+    email: string
+    phone?: string
+  }
+
+  // Item being sold or rented
+  item: {
+    _id: string
+    title: string
+    price: number
+    images: string[]
+    description?: string
+    location?: string
+  }
+  itemType: "Car" | "Property" | "Land" | "Machine"
+
+  // Deal details
+  dealType?: string
+  message?: string
+  userMessage?: string // For backward compatibility
+  originalPrice: number
+  userOfferPrice?: number
+
+  // Status and timestamps
+  status: "pending" | "approved" | "rejected" | "cancelled" | "completed"
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
+  cancelledAt?: string
+  cancellationReason?: string
+
+  // Legacy fields for compatibility
   itemId: string
-  item: Car | House | Land | Machine // Made item type more specific
-  itemType: "car" | "house" | "land" | "machine" // Added itemType field
   userId: string
   userName: string
   userEmail: string
-  userPhone?: string // Added optional user phone
-  originalPrice: number
-  userOfferPrice?: number
-  message: string
-  userMessage?: string
-  status: "pending" | "accepted" | "completed" | "incomplete" | "rejected" // Updated status options to match requirements
-  createdAt: string
-  updatedAt: string
+  userPhone?: string
   chatHistory: ChatMessage[]
   adminInfo: {
     name: string

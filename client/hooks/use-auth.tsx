@@ -1,46 +1,62 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { authService, type User, type AuthResponse, type RegisterData, type LoginData } from "@/lib/auth"
+
+function SearchParamsHandler({ onAuthRequired }: { onAuthRequired: () => void }) {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get("auth") === "required") {
+      onAuthRequired()
+    }
+  }, [searchParams, onAuthRequired])
+
+  return null
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [initializing, setInitializing] = useState(true)
   const router = useRouter()
 
   const checkAuth = useCallback(async () => {
     try {
+      console.log("[v0] Checking authentication status...")
       setLoading(true)
-      console.log("[v0] Starting auth check")
 
       const storedUser = authService.getStoredUser()
       const hasToken = authService.isAuthenticated()
 
-      console.log("[v0] Stored user:", storedUser?.email)
+      console.log("[v0] Stored user:", storedUser ? "exists" : "none")
       console.log("[v0] Has token:", hasToken)
 
       if (storedUser && hasToken) {
         setUser(storedUser)
         setIsAuthenticated(true)
-        console.log("[v0] User authenticated from stored data")
+        console.log("[v0] Using stored user data")
 
         try {
+          console.log("[v0] Fetching current user...")
           const currentUser = await authService.getMe()
           if (currentUser) {
-            console.log("[v0] Server verification successful")
             setUser(currentUser)
+            setIsAuthenticated(true)
+            console.log("[v0] User verified with server")
           } else {
-            console.log("[v0] Server verification failed, but keeping stored auth state")
-            // Don't clear the auth state - the stored user and token are still valid
+            console.log("[v0] Server verification failed, clearing auth")
+            setUser(null)
+            setIsAuthenticated(false)
           }
         } catch (error) {
-          console.log("[v0] Server verification error, but keeping stored auth state:", error)
-          // Don't clear the auth state on server verification errors
+          console.error("[v0] Background verification failed:", error)
+          // Don't clear auth on background verification failure
         }
       } else {
-        console.log("[v0] User not authenticated, redirecting to home")
+        console.log("[v0] No valid stored auth, clearing state")
         setUser(null)
         setIsAuthenticated(false)
       }
@@ -50,26 +66,35 @@ export function useAuth() {
       setIsAuthenticated(false)
     } finally {
       setLoading(false)
+      setInitializing(false)
     }
   }, [])
 
   const login = async (data: LoginData): Promise<AuthResponse> => {
     try {
+      console.log("[v0] Attempting login...")
       setLoading(true)
       const response = await authService.login(data)
 
       if (response.status === "success" && response.data) {
+        console.log("[v0] Login successful")
         setUser(response.data.user)
         setIsAuthenticated(true)
 
         setTimeout(() => {
-          checkAuth()
-        }, 50)
+          if (response.data?.user.role === "admin") {
+            router.push("/dashboard/admin")
+          } else {
+            router.push("/dashboard/user")
+          }
+        }, 100)
+      } else {
+        console.log("[v0] Login failed:", response.message)
       }
 
       return response
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("[v0] Login error:", error)
       return {
         status: "error",
         message: "Login failed. Please try again.",
@@ -113,21 +138,32 @@ export function useAuth() {
 
   const logout = async (): Promise<void> => {
     try {
-      setLoading(true)
+      console.log("[v0] Logging out...")
+
+      // Clear auth state immediately for responsive UI
+      setUser(null)
+      setIsAuthenticated(false)
+
+      // Call logout API
       await authService.logout()
-      setUser(null)
-      setIsAuthenticated(false)
-      router.push("/")
+      console.log("[v0] Logout successful")
+
       setTimeout(() => {
-        window.location.reload()
-      }, 100)
+        if (typeof window !== "undefined") {
+          window.location.href = "/"
+        }
+      }, 1500) // Give time for loading screen to be visible
     } catch (error) {
-      console.error("Logout error:", error)
+      console.error("[v0] Logout error:", error)
+      // Still clear state even if API call fails
       setUser(null)
       setIsAuthenticated(false)
-      router.push("/")
-    } finally {
-      setLoading(false)
+
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.location.href = "/"
+        }
+      }, 1000)
     }
   }
 
@@ -155,10 +191,6 @@ export function useAuth() {
       if (response.status === "success" && response.data) {
         setUser(response.data.user)
         setIsAuthenticated(true)
-
-        setTimeout(() => {
-          checkAuth()
-        }, 50)
       }
 
       return response
@@ -173,13 +205,33 @@ export function useAuth() {
     }
   }
 
+  const handleAuthRequired = useCallback(() => {
+    if (!isAuthenticated) {
+      console.log("[v0] Authentication required by middleware")
+    }
+  }, [isAuthenticated])
+
   useEffect(() => {
     checkAuth()
   }, [checkAuth])
 
+  useEffect(() => {
+    if (!initializing && isAuthenticated) {
+      const interval = setInterval(
+        () => {
+          console.log("[v0] Periodic auth check...")
+          checkAuth()
+        },
+        5 * 60 * 1000,
+      )
+
+      return () => clearInterval(interval)
+    }
+  }, [checkAuth, initializing, isAuthenticated])
+
   return {
     user,
-    loading,
+    loading: loading || initializing,
     isAuthenticated,
     login,
     register,
@@ -188,5 +240,10 @@ export function useAuth() {
     forgotPassword,
     resetPassword,
     checkAuth,
+    SearchParamsHandler: () => (
+      <Suspense fallback={null}>
+        <SearchParamsHandler onAuthRequired={handleAuthRequired} />
+      </Suspense>
+    ),
   }
 }

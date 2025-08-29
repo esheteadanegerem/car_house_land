@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
 import { useAuth } from "@/hooks/use-auth"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const pathname = usePathname()
   const { cart = [], setIsAuthModalOpen } = useApp()
-  const { user, logout } = useAuth()
+  const { user, logout, loading } = useAuth()
 
   useEffect(() => {
     setIsMobileMenuOpen(false)
@@ -42,8 +44,20 @@ export function Navigation() {
   const cartItemCount = Array.isArray(cart) ? cart.length : 0
 
   const handleLogout = async () => {
-    setIsMobileMenuOpen(false)
-    await logout()
+    console.log("[v0] Navigation logout triggered")
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    } catch (error) {
+      console.error("[v0] Logout error:", error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
+  if (isLoggingOut) {
+    return <LoadingScreen message="Signing you out..." fullScreen={true} />
   }
 
   return (
@@ -116,7 +130,9 @@ export function Navigation() {
               </>
             )}
 
-            {user ? (
+            {loading ? (
+              <div className="w-20 h-8 bg-gray-200 animate-pulse rounded"></div>
+            ) : user ? (
               <div className="flex items-center space-x-1 lg:space-x-2">
                 <Link href={user.role === "admin" ? "/profile/admin" : "/dashboard/user"}>
                   <Button
@@ -133,7 +149,8 @@ export function Navigation() {
                   variant="ghost"
                   size="sm"
                   onClick={handleLogout}
-                  className="hover:scale-105 transition-all duration-300 hover:text-red-500 hover:bg-red-500/10 font-medium px-2 lg:px-3"
+                  disabled={isLoggingOut}
+                  className="hover:scale-105 transition-all duration-300 hover:text-red-500 hover:bg-red-500/10 font-medium px-2 lg:px-3 disabled:opacity-50"
                 >
                   <LogOut className="w-4 h-4" />
                 </Button>
@@ -217,7 +234,9 @@ export function Navigation() {
                   </>
                 )}
 
-                {user ? (
+                {loading ? (
+                  <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
+                ) : user ? (
                   <>
                     <Link
                       href={user.role === "admin" ? "/profile/admin" : "/dashboard/user"}
@@ -239,7 +258,9 @@ export function Navigation() {
                       className="w-full justify-start hover:scale-105 transition-all duration-300 hover:text-red-500 hover:bg-red-500/10 font-medium py-2.5"
                       onClick={() => {
                         handleLogout()
+                        setIsMobileMenuOpen(false)
                       }}
+                      disabled={isLoggingOut}
                     >
                       <LogOut className="w-4 h-4 mr-3" />
                       <span className="text-sm">Logout</span>

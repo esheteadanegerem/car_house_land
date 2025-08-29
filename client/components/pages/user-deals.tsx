@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Phone,
   Mail,
   MessageCircle,
@@ -19,28 +20,53 @@ import {
   Home,
   MapPin,
   Wrench,
+  Search,
+  Filter,
+  RefreshCw,
 } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import type { Deal } from "@/types"
 
 export function UserDeals() {
-  const { user, getUserDeals } = useApp()
+  const { user, getUserDeals, refreshDeals } = useApp()
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [isLoading, setIsLoading] = useState(false)
 
   const userDeals = getUserDeals()
+
+  const filteredDeals = userDeals.filter((deal) => {
+    const matchesSearch =
+      deal.item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      deal.dealId?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === "all" || deal.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  const handleRefresh = async () => {
+    setIsLoading(true)
+    try {
+      await refreshDeals()
+    } catch (error) {
+      console.error("Error refreshing deals:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const getStatusIcon = (status: Deal["status"]) => {
     switch (status) {
       case "pending":
         return <Clock className="w-4 h-4" />
-      case "accepted":
+      case "approved":
         return <CheckCircle className="w-4 h-4" />
       case "completed":
         return <CheckCircle className="w-4 h-4" />
-      case "incomplete":
-        return <AlertCircle className="w-4 h-4" />
       case "rejected":
+        return <XCircle className="w-4 h-4" />
+      case "cancelled":
         return <XCircle className="w-4 h-4" />
       default:
         return <Clock className="w-4 h-4" />
@@ -51,13 +77,13 @@ export function UserDeals() {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "accepted":
+      case "approved":
         return "bg-blue-100 text-blue-800 border-blue-200"
       case "completed":
         return "bg-green-100 text-green-800 border-green-200"
-      case "incomplete":
-        return "bg-red-100 text-red-800 border-red-200"
       case "rejected":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "cancelled":
         return "bg-gray-100 text-gray-800 border-gray-200"
       default:
         return "bg-yellow-100 text-yellow-800 border-yellow-200"
@@ -65,9 +91,10 @@ export function UserDeals() {
   }
 
   const getItemIcon = (itemType: Deal["itemType"]) => {
-    switch (itemType) {
+    switch (itemType.toLowerCase()) {
       case "car":
         return <Car className="w-5 h-5" />
+      case "property":
       case "house":
         return <Home className="w-5 h-5" />
       case "land":
@@ -99,33 +126,72 @@ export function UserDeals() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-red-50 to-orange-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-responsive-3xl font-bold gradient-text-brand">My Deals</h1>
-          <p className="text-responsive-base text-gray-600 mt-2">
-            Track your inquiries and deal progress with our team
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-responsive-3xl font-bold gradient-text-brand">My Deals</h1>
+              <p className="text-responsive-base text-gray-600 mt-2">
+                Track your inquiries and deal progress with our team
+              </p>
+            </div>
+            <Button onClick={handleRefresh} disabled={isLoading} variant="outline">
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 mt-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search deals by item name or deal ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {userDeals.length === 0 ? (
+        {filteredDeals.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <div className="space-y-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
                   <MessageCircle className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-responsive-lg font-semibold text-gray-900">No Deals Yet</h3>
+                <h3 className="text-responsive-lg font-semibold text-gray-900">
+                  {searchTerm || statusFilter !== "all" ? "No Matching Deals" : "No Deals Yet"}
+                </h3>
                 <p className="text-gray-600 max-w-md mx-auto">
-                  You haven't made any inquiries yet. Browse our listings and contact us about items you're interested
-                  in.
+                  {searchTerm || statusFilter !== "all"
+                    ? "Try adjusting your search or filter criteria."
+                    : "You haven't made any inquiries yet. Browse our listings and contact us about items you're interested in."}
                 </p>
-                <Button asChild className="mt-4">
-                  <a href="/">Browse Listings</a>
-                </Button>
+                {!searchTerm && statusFilter === "all" && (
+                  <Button asChild className="mt-4">
+                    <a href="/">Browse Listings</a>
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {userDeals.map((deal) => (
+            {filteredDeals.map((deal) => (
               <Card key={deal.id} className="hover:shadow-lg transition-shadow duration-300">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -138,6 +204,7 @@ export function UserDeals() {
                       <span className="capitalize text-xs">{deal.status}</span>
                     </Badge>
                   </div>
+                  {deal.dealId && <p className="text-xs text-gray-500 font-mono">ID: {deal.dealId}</p>}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="aspect-video relative overflow-hidden rounded-lg">
@@ -151,7 +218,9 @@ export function UserDeals() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-responsive-sm text-gray-600">Price:</span>
-                      <span className="font-semibold text-responsive-sm">${deal.originalPrice.toLocaleString()}</span>
+                      <span className="font-semibold text-responsive-sm">
+                        ETB {deal.originalPrice.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-responsive-sm text-gray-600">Inquiry Date:</span>
@@ -187,6 +256,9 @@ export function UserDeals() {
                       <span className="capitalize">{selectedDeal.status}</span>
                     </Badge>
                   </DialogTitle>
+                  {selectedDeal.dealId && (
+                    <p className="text-sm text-gray-500 font-mono">Deal ID: {selectedDeal.dealId}</p>
+                  )}
                 </DialogHeader>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -205,7 +277,7 @@ export function UserDeals() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Price:</span>
-                        <span className="font-semibold">${selectedDeal.originalPrice.toLocaleString()}</span>
+                        <span className="font-semibold">ETB {selectedDeal.originalPrice.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Location:</span>
@@ -228,6 +300,15 @@ export function UserDeals() {
                         {selectedDeal.message}
                       </p>
                     </div>
+
+                    {selectedDeal.status === "cancelled" && selectedDeal.cancellationReason && (
+                      <div>
+                        <h4 className="font-medium mb-2 text-red-600">Cancellation Reason</h4>
+                        <p className="text-responsive-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                          {selectedDeal.cancellationReason}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Admin Contact Info */}
@@ -312,6 +393,12 @@ export function UserDeals() {
                           <div className="text-responsive-sm text-gray-600 space-y-1">
                             <p>Created: {new Date(selectedDeal.createdAt).toLocaleString()}</p>
                             <p>Last Updated: {new Date(selectedDeal.updatedAt).toLocaleString()}</p>
+                            {selectedDeal.completedAt && (
+                              <p>Completed: {new Date(selectedDeal.completedAt).toLocaleString()}</p>
+                            )}
+                            {selectedDeal.cancelledAt && (
+                              <p>Cancelled: {new Date(selectedDeal.cancelledAt).toLocaleString()}</p>
+                            )}
                           </div>
                         </div>
                       </CardContent>

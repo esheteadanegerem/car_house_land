@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans, GeistMono } from "geist/font"
 import "./globals.css"
-import { AppProvider } from "@/context/app-context"
+import { AppProvider } from "@/components/providers/client-providers"
 import { LayoutContent } from "@/components/layout/layout-content"
 
 export const metadata: Metadata = {

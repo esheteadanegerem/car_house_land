@@ -47,9 +47,20 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
       setIsAuthModalOpen(true)
       return
     }
+
+    console.log("[v0] Contact seller clicked for item:", item.id)
     const message = `ሰላም፣ በ${item.title} ላይ ፍላጎት አለኝ። እባክዎ ተጨማሪ መረጃ ይስጡኝ?`
+
     createDeal(type, item, message)
-    window.location.href = "/deals"
+      .then(() => {
+        console.log("[v0] Deal created successfully, redirecting to deals page")
+        window.location.href = "/deals"
+      })
+      .catch((error) => {
+        console.error("[v0] Error creating deal:", error)
+        // Still redirect even if there's an error, as we have local fallback
+        window.location.href = "/deals"
+      })
   }
 
   const isItemFavorite = isFavorite(item.id)
@@ -258,6 +269,12 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
                 <span className="font-bold text-yellow-700 dark:text-yellow-300 text-xs">{item.rating}</span>
                 <span className="text-yellow-600 dark:text-yellow-400 text-xs hidden sm:inline">({item.reviews})</span>
               </div>
+            </div>
+
+            {/* Posted date display */}
+            <div className="flex items-center space-x-1 text-muted-foreground text-xs">
+              <Calendar className="w-3 h-3 text-blue-500 flex-shrink-0" />
+              <span className="font-medium">Posted: {new Date(item.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
         </Link>

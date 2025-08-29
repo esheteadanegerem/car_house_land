@@ -100,8 +100,19 @@ export function CarDetail({ carId }: CarDetailProps) {
       return
     }
 
+    console.log("[v0] Contact dealer clicked for car:", car.id)
     const message = `I'm interested in the ${car.make} ${car.model} (${car.year}) listed for ETB ${car.price?.toLocaleString()}. Please contact me with more details.`
+
     createDeal("car", car, message)
+      .then(() => {
+        console.log("[v0] Deal created successfully, redirecting to deals page")
+        window.location.href = "/deals"
+      })
+      .catch((error) => {
+        console.error("[v0] Error creating deal:", error)
+        // Still redirect even if there's an error, as we have local fallback
+        window.location.href = "/deals"
+      })
   }
 
   return (
@@ -193,6 +204,12 @@ export function CarDetail({ carId }: CarDetailProps) {
                 <div className="flex items-center">
                   <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <span className="text-sm sm:text-base">{car.year || "N/A"}</span>
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="text-sm sm:text-base">
+                    Posted: {car.createdAt ? new Date(car.createdAt).toLocaleDateString() : "N/A"}
+                  </span>
                 </div>
               </div>
               <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-3 sm:mb-4">

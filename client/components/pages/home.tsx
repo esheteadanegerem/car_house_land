@@ -5,9 +5,43 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
+import { useState, useEffect } from "react"
 
 export function Home() {
   const { user, setIsAuthModalOpen, cars, houses, lands, machines } = useApp()
+
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+
+  const videos = [
+    {
+      src: "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4",
+      alt: "Modern luxury car showcase",
+      category: "cars",
+    },
+    {
+      src: "https://videos.pexels.com/video-files/5524186/5524186-uhd_2560_1440_25fps.mp4",
+      alt: "Modern architectural design showcase",
+      category: "houses",
+    },
+    {
+      src: "https://videos.pexels.com/video-files/4992249/4992249-uhd_2560_1440_25fps.mp4",
+      alt: "Beautiful landscapes and real estate plots",
+      category: "lands",
+    },
+    {
+      src: "https://videos.pexels.com/video-files/3195394/3195394-uhd_2560_1440_25fps.mp4",
+      alt: "Construction machines and industrial equipment",
+      category: "machines",
+    },
+  ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentVideoIndex((prevIndex) => (prevIndex + 1) % videos.length)
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [videos.length])
 
   const stats = [
     { label: "ንቁ ዝርዝሮች", value: "2,500+", icon: Car, color: "brand-green" },
@@ -157,11 +191,50 @@ export function Home() {
 
             <div className="relative animate-slide-in-right order-first lg:order-last">
               <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-lg blur opacity-30 animate-pulse-slow"></div>
-              <img
-                src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=500&fit=crop&crop=center"
-                alt="መኪናዎች እና ንብረቶች ማሳያ"
-                className="relative w-full h-48 sm:h-64 md:h-80 lg:h-auto rounded-lg shadow-2xl transition-transform duration-500 object-cover"
-              />
+              <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 xl:h-[500px] rounded-lg shadow-2xl overflow-hidden">
+                {videos.map((video, index) => (
+                  <video
+                    key={index}
+                    src={video.src}
+                    alt={video.alt}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                      index === currentVideoIndex ? "opacity-100" : "opacity-0"
+                    }`}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    onError={(e) => {
+                      console.log("[v0] Video loading error:", e)
+                    }}
+                    onLoadedData={() => {
+                      console.log("[v0] Video loaded successfully")
+                    }}
+                  />
+                ))}
+
+                {/* Video indicators */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                  {videos.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentVideoIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        index === currentVideoIndex ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75"
+                      }`}
+                      aria-label={`View ${videos[index].category} video`}
+                    />
+                  ))}
+                </div>
+
+                {/* Category label */}
+                <div className="absolute top-4 left-4">
+                  <Badge className="bg-black/50 text-white border-white/20 backdrop-blur-sm">
+                    {videos[currentVideoIndex].category}
+                  </Badge>
+                </div>
+              </div>
             </div>
           </div>
         </div>

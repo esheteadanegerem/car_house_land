@@ -4,18 +4,18 @@ const User = require('../models/User');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/token');
 const { sendEmail, emailTemplates } = require('../utils/email');
 const { generateRandomString } = require('../utils/helper');
- 
- const register = async (req, res) => {
+
+const register = async (req, res) => {
   try {
-const {
-  fullName,
-  email,
-  password,
-  phone,
-  role = 'user',
-  avatar = null,
-  address = { street: '', city: '', region: '', country: 'ETHIOPIA' }
-} = req.body;
+    const {
+      fullName,
+      email,
+      password,
+      phone,
+      role = 'user',
+      avatar = null,
+      address = { street: '', city: '', region: '', country: 'ETHIOPIA' }
+    } = req.body;
 
     const existingUser = await User.findOne({
       $or: [
@@ -49,7 +49,7 @@ const {
     // Send email
     setImmediate(async () => {
       try {
-        const emailContent = emailTemplates.verificationCode(fullName,verificationCode);
+        const emailContent = emailTemplates.verificationCode(fullName, verificationCode);
         await sendEmail({
           email: user.email,
           ...emailContent
@@ -184,27 +184,49 @@ const login = async (req, res) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     // Set access token in cookie (to support req.cookies.token in middleware)
-    res.cookie('token', token, {
+    res.cookie('accessToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 15 * 60 * 1000, // 15 minutes, matching access token expiry
     });
 
     // Prepare user data (exclude password)
     const userData = await User.findById(user._id).select('-password');
 
+    // Set user cookie
+    res.cookie('user', JSON.stringify({
+      _id: userData._id,
+      fullName: userData.fullName,
+      email: userData.email,
+      phone: userData.phone,
+      role: userData.role,
+      avatar: userData.avatar,
+      address: userData.address,
+      isActive: userData.isActive,
+      isVerified: userData.isVerified,
+      lastLogin: userData.lastLogin,
+      createdAt: userData.createdAt,
+      updatedAt: userData.updatedAt,
+    }), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000, // Match accessToken expiry
+    });
+
     res.status(200).json({
       status: 'success',
       message: 'Login successful',
       data: {
         user: userData,
-        token, // Still include access token in response for flexibility
+        token,
+        refreshToken,
       },
     });
   } catch (error) {
@@ -353,6 +375,7 @@ const forgotPassword = async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to process forgot password request' });
   }
 };
+
 const verifyResetCode = async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -380,7 +403,6 @@ const verifyResetCode = async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Failed to verify code' });
   }
 };
-
 
 const resetPassword = async (req, res) => {
   try {
@@ -419,14 +441,21 @@ const resetPassword = async (req, res) => {
     user.resetCodeExpire = undefined;
     await user.save();
 
-    const authToken = generateToken({ id: user._id, role: user.role });
-    const refreshToken = generateRefreshToken({ id: user._id });
+    const authToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.cookie('accessToken', authToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000
     });
 
     res.status(200).json({
@@ -445,7 +474,6 @@ const resetPassword = async (req, res) => {
     });
   }
 };
-
 
 const refreshToken = async (req, res) => {
   try {
@@ -476,14 +504,21 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    const token = generateToken({ id: user._id, role: user.role });
-    const newRefreshToken = generateRefreshToken({ id: user._id });
+    const token = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user);
 
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.cookie('accessToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000
     });
 
     return res.status(200).json({
@@ -503,18 +538,23 @@ const refreshToken = async (req, res) => {
     });
   }
 };
+
 const logout = async (req, res) => {
   try {
-    // Clear both refreshToken and token cookies
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
-    res.clearCookie('token', {
+    res.clearCookie('accessToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
+    });
+    res.clearCookie('user', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     });
 
     res.status(200).json({
@@ -529,6 +569,7 @@ const logout = async (req, res) => {
     });
   }
 };
+
 const requestEmailVerification = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -564,5 +605,4 @@ module.exports = {
   verifyEmail,
   requestEmailVerification,
   verifyResetCode
-
 };

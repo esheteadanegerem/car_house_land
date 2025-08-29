@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,26 +8,63 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { User, Mail, Phone, MapPin, Shield, Settings, Save, Camera, Key } from "lucide-react"
+import { User, Mail, Phone, MapPin, Shield, Settings, Save, Camera, Key, Loader2 } from "lucide-react"
+import { useApp } from "@/context/app-context"
 
 export function AdminProfile() {
+  const { user, isAuthenticated } = useApp()
   const [isEditing, setIsEditing] = useState(false)
+  const [loading, setLoading] = useState(true)
+
   const [profile, setProfile] = useState({
-    name: "John Admin",
-    email: "admin@platform.com",
-    phone: "+1 (555) 123-4567",
-    location: "New York, NY",
-    role: "Super Admin",
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    role: "Admin",
     department: "Platform Management",
-    bio: "Experienced platform administrator with 5+ years managing e-commerce operations.",
+    bio: "",
     permissions: ["User Management", "Content Management", "Analytics", "System Settings"],
-    lastLogin: "2024-01-15 10:30 AM",
-    accountCreated: "2023-06-15",
+    lastLogin: "",
+    accountCreated: "",
   })
+
+  useEffect(() => {
+    if (user && isAuthenticated) {
+      console.log("[v0] Loading admin profile data:", user)
+      setProfile({
+        name: user.fullName || "Admin User",
+        email: user.email || "",
+        phone: user.phone || "",
+        location: user.address || user.location || "",
+        role: user.role === "admin" ? "Super Admin" : "Admin",
+        department: "Platform Management",
+        bio: user.bio || "Platform administrator managing e-commerce operations.",
+        permissions: ["User Management", "Content Management", "Analytics", "System Settings"],
+        lastLogin: user.lastLogin ? new Date(user.lastLogin).toLocaleString() : "Recently",
+        accountCreated: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "2023-06-15",
+      })
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+  }, [user, isAuthenticated])
 
   const handleSave = () => {
     setIsEditing(false)
-    // Save logic would go here
+    console.log("[v0] Saving admin profile changes:", profile)
+    // TODO: Implement API call to update user profile
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading admin profile...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

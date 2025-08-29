@@ -66,6 +66,8 @@ export function AuthModal() {
           newPassword: "",
         })
 
+        console.log("[v0] Login successful, user will be redirected by middleware if needed")
+
         setTimeout(() => {
           if (response.data?.user.role === "admin") {
             router.push("/dashboard/admin")
@@ -184,6 +186,8 @@ export function AuthModal() {
           resetCode: "",
           newPassword: "",
         })
+
+        console.log("[v0] Password reset successful, user will be redirected by middleware if needed")
 
         setTimeout(() => {
           if (response.data?.user.role === "admin") {

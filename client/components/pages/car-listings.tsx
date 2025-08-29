@@ -49,31 +49,49 @@ export function CarListings() {
     transmission: "all",
     location: "",
     listingType: "all",
+    sortBy: "date-new",
   })
 
-  const filteredCars = cars.filter((car) => {
-    const matchesSearch =
-      (car.make?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (car.model?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (car.title?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-    const matchesCondition = filters.condition === "all" || car.condition === filters.condition
-    const matchesMake = filters.make === "all" || car.make === filters.make
-    const matchesFuelType = filters.fuelType === "all" || car.fuelType === filters.fuelType
-    const matchesTransmission = filters.transmission === "all" || car.transmission === filters.transmission
-    const matchesLocation =
-      !filters.location || (car.location?.toLowerCase() || "").includes(filters.location.toLowerCase())
-    const matchesListingType = filters.listingType === "all" || car.listingType === filters.listingType
+  const filteredCars = cars
+    .filter((car) => {
+      const matchesSearch =
+        (car.make?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (car.model?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (car.title?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+      const matchesCondition = filters.condition === "all" || car.condition === filters.condition
+      const matchesMake = filters.make === "all" || car.make === filters.make
+      const matchesFuelType = filters.fuelType === "all" || car.fuelType === filters.fuelType
+      const matchesTransmission = filters.transmission === "all" || car.transmission === filters.transmission
+      const matchesLocation =
+        !filters.location || (car.location?.toLowerCase() || "").includes(filters.location.toLowerCase())
+      const matchesListingType = filters.listingType === "all" || car.listingType === filters.listingType
 
-    return (
-      matchesSearch &&
-      matchesCondition &&
-      matchesMake &&
-      matchesFuelType &&
-      matchesTransmission &&
-      matchesLocation &&
-      matchesListingType
-    )
-  })
+      return (
+        matchesSearch &&
+        matchesCondition &&
+        matchesMake &&
+        matchesFuelType &&
+        matchesTransmission &&
+        matchesLocation &&
+        matchesListingType
+      )
+    })
+    .sort((a, b) => {
+      switch (filters.sortBy) {
+        case "price-asc":
+          return a.price - b.price
+        case "price-desc":
+          return b.price - a.price
+        case "date-new":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case "date-old":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        case "rating":
+          return b.rating - a.rating
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      }
+    })
 
   const handleContactClick = (car: any) => {
     if (!user) {
@@ -259,6 +277,22 @@ export function CarListings() {
               value={filters.location}
               onChange={(e) => setFilters((prev) => ({ ...prev, location: e.target.value }))}
             />
+
+            <Select
+              value={filters.sortBy}
+              onValueChange={(value) => setFilters((prev) => ({ ...prev, sortBy: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date-new">Newest First</SelectItem>
+                <SelectItem value="date-old">Oldest First</SelectItem>
+                <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -273,7 +307,7 @@ export function CarListings() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading cars from API...</p>
+              <p className="text-muted-foreground">Loading cars...</p>
             </div>
           </div>
         ) : (
@@ -352,6 +386,11 @@ export function CarListings() {
                           {car.location}
                         </div>
 
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          Posted: {new Date(car.createdAt).toLocaleDateString()}
+                        </div>
+
                         <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
                           {!isSold && (
                             <>
@@ -421,6 +460,7 @@ export function CarListings() {
                       transmission: "all",
                       location: "",
                       listingType: "all",
+                      sortBy: "date-new",
                     })
                   }}
                 >

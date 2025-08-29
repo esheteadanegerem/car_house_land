@@ -7,7 +7,19 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, Star, MapPin, Square, Droplets, Zap, Phone, Mail, MessageCircle, ShoppingCart } from "lucide-react"
+import {
+  ArrowLeft,
+  Star,
+  MapPin,
+  Square,
+  Droplets,
+  Zap,
+  Phone,
+  Mail,
+  MessageCircle,
+  ShoppingCart,
+  Calendar,
+} from "lucide-react"
 import { useApp } from "@/context/app-context"
 
 interface LandDetailProps {
@@ -221,6 +233,10 @@ export function LandDetail({ landId }: LandDetailProps) {
                   <div className="flex items-center justify-center space-x-1 text-gray-600">
                     <MapPin className="w-4 h-4" />
                     <span>{land.location}</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-1 text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span>Posted: {land.createdAt ? new Date(land.createdAt).toLocaleDateString() : "N/A"}</span>
                   </div>
                 </div>
 

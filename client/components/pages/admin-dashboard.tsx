@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import React from "react"
 
+import { useState } from "react"
 import { useApp } from "@/context/app-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -68,7 +68,6 @@ import type { Deal } from "@/types"
 import { Label } from "@/components/ui/label"
 import { createCar } from "@/lib/api/cars"
 import { authService } from "@/lib/auth"
-import { useAuth } from "@/hooks/use-auth"
 
 export function AdminDashboard() {
   const {
@@ -92,11 +91,8 @@ export function AdminDashboard() {
     addLand,
     updateLand,
     deleteLand,
+    refreshDeals,
   } = useApp()
-
-  const { user: authUser, loading: authLoading, isAuthenticated } = useAuth()
-  const router = useRouter()
-
   const [activeTab, setActiveTab] = useState("overview")
   const [selectedCategory, setSelectedCategory] = useState("cars")
   const [editingItem, setEditingItem] = useState<any>(null)
@@ -123,23 +119,7 @@ export function AdminDashboard() {
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
 
   const [owners, setOwners] = useState([])
-  const [isLoadingOwners, setIsLoadingOwners] = React.useState(false)
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!isAuthenticated || !authUser) {
-        console.log("[v0] User not authenticated, redirecting to home")
-        router.push("/")
-        return
-      }
-
-      if (authUser.role !== "admin") {
-        console.log("[v0] User is not admin, redirecting to user dashboard")
-        router.push("/dashboard/user")
-        return
-      }
-    }
-  }, [authLoading, isAuthenticated, authUser, router])
+  const [isLoadingOwners, setIsLoadingOwners] = useState(false)
 
   const fetchOwners = async () => {
     setIsLoadingOwners(true)
@@ -183,11 +163,6 @@ export function AdminDashboard() {
 
   React.useEffect(() => {
     const fetchUsers = async () => {
-      // Don't fetch if still loading auth or not authenticated
-      if (authLoading || !isAuthenticated || !authUser || authUser.role !== "admin") {
-        return
-      }
-
       try {
         setIsLoadingUsers(true)
 
@@ -197,8 +172,6 @@ export function AdminDashboard() {
           return
         }
 
-        console.log("[v0] Fetching users with token:", token.substring(0, 20) + "...")
-
         const response = await fetch("https://car-house-land.onrender.com/api/users", {
           method: "GET",
           headers: {
@@ -207,15 +180,12 @@ export function AdminDashboard() {
           },
         })
 
-        console.log("[v0] Users API response status:", response.status)
-
         if (response.status === 401) {
           console.error("Authentication failed - token may be expired")
           return
         }
 
         const data = await response.json()
-        console.log("[v0] Users API response data:", data)
 
         if (data.status === "success" && data.data?.users) {
           // Transform API data to match component structure
@@ -233,7 +203,6 @@ export function AdminDashboard() {
             isVerified: user.isVerified,
           }))
           setUsers(transformedUsers)
-          console.log("[v0] Successfully loaded", transformedUsers.length, "users")
         } else {
           console.error("Failed to fetch users:", data)
         }
@@ -245,7 +214,7 @@ export function AdminDashboard() {
     }
 
     fetchUsers()
-  }, [authLoading, isAuthenticated, authUser]) // Add auth dependencies
+  }, [])
 
   React.useEffect(() => {
     if (activeTab === "listings") {
@@ -253,19 +222,15 @@ export function AdminDashboard() {
     }
   }, [activeTab])
 
-  if (authLoading) {
+  if (!user || user.role !== "admin") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-responsive-2xl font-bold text-gray-900">Access Denied</h1>
+          <p className="text-responsive-base text-gray-600 mt-2">You need admin privileges to access this page</p>
         </div>
       </div>
     )
-  }
-
-  if (!isAuthenticated || !authUser || authUser.role !== "admin") {
-    return null
   }
 
   const totalListings = cars.length + houses.length + lands.length + machines.length
@@ -333,18 +298,29 @@ export function AdminDashboard() {
   ]
 
   const getCurrentData = () => {
+    let data = []
     switch (selectedCategory) {
       case "cars":
-        return cars
+        data = cars
+        break
       case "houses":
-        return houses
+        data = houses
+        break
       case "lands":
-        return lands
+        data = lands
+        break
       case "machines":
-        return machines
+        data = machines
+        break
       default:
-        return []
+        data = []
     }
+
+    return data.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime()
+      const dateB = new Date(b.createdAt || 0).getTime()
+      return dateB - dateA
+    })
   }
 
   const handleDeleteItem = (item: any) => {
@@ -723,48 +699,6 @@ export function AdminDashboard() {
       }
     }
 
-    if (selectedCategory === "machines") {
-      if (!editingItem.title?.trim()) requiredFields.push("Title")
-      if (!editingItem.category?.trim()) requiredFields.push("Category")
-      if (!editingItem.brand?.trim()) requiredFields.push("Brand")
-      if (!editingItem.price || editingItem.price <= 0) requiredFields.push("Price")
-      if (!editingItem.type?.trim()) requiredFields.push("Type (Sale/Rent)")
-      if (!editingItem.condition?.trim()) requiredFields.push("Condition")
-      if (!editingItem.city?.trim()) requiredFields.push("City")
-      if (!editingItem.region?.trim()) requiredFields.push("Region")
-      if (!editingItem.address?.trim()) requiredFields.push("Address")
-      if (!editingItem.owner?.trim()) requiredFields.push("Owner")
-      if (!editingItem.description?.trim() || editingItem.description.length < 20) {
-        requiredFields.push("Description (minimum 20 characters)")
-      }
-    }
-
-    // Validation for machines
-    if (selectedCategory === "machines") {
-      const requiredFields = [
-        { field: "title", label: "Title" },
-        { field: "category", label: "Category" },
-        { field: "brand", label: "Brand" },
-        { field: "type", label: "Type" },
-        { field: "condition", label: "Condition" },
-        { field: "price", label: "Price" },
-        { field: "description", label: "Description" },
-        { field: "address", label: "Address" },
-        { field: "city", label: "City" },
-        { field: "owner", label: "Owner" },
-      ]
-
-      const missingFields = requiredFields.filter(({ field }) => {
-        const value = editingItem[field]
-        return !value || (typeof value === "string" && !value.trim()) || (typeof value === "number" && value <= 0)
-      })
-
-      if (missingFields.length > 0) {
-        alert(`Missing required fields: ${JSON.stringify(missingFields.map((f) => f.label))}`)
-        return
-      }
-    }
-
     if (requiredFields.length > 0) {
       console.error("[v0] Missing required fields:", requiredFields)
       alert(`Please fill in the following required fields:\n• ${requiredFields.join("\n• ")}`)
@@ -786,120 +720,105 @@ export function AdminDashboard() {
 
       const formData = new FormData()
 
-      if (selectedCategory === "houses") {
+      if (selectedCategory === "cars") {
+        // Car-specific fields
+        formData.append("title", editingItem.title || "")
+        formData.append("make", editingItem.make || "")
+        formData.append("model", editingItem.model || "")
+        formData.append("price", editingItem.price?.toString() || "0")
+        formData.append("year", editingItem.year?.toString() || "")
+        formData.append("mileage", editingItem.mileage?.toString() || "0")
+        formData.append("type", editingItem.type || "sale")
+        formData.append("condition", editingItem.condition || "used")
+        formData.append("fuelType", editingItem.fuelType || "gasoline")
+        formData.append("transmission", editingItem.transmission || "manual")
+        formData.append("color", editingItem.color || "")
+        formData.append("bodyType", editingItem.bodyType || "sedan")
+        formData.append("description", editingItem.description || "")
+        formData.append("city", editingItem.city || "")
+        formData.append("region", editingItem.region || "")
+        formData.append("address", editingItem.address || "")
+        formData.append("kebele", editingItem.kebele || "")
+        formData.append("owner", editingItem.owner || "")
+        formData.append("status", editingItem.status || "available")
+
+        // Add features as JSON string
+        if (editingItem.features && editingItem.features.length > 0) {
+          formData.append("features", JSON.stringify(editingItem.features))
+        }
+      } else if (selectedCategory === "houses") {
+        // House-specific fields
         formData.append("title", editingItem.title || "")
         formData.append("propertyType", editingItem.propertyType || "")
         formData.append("price", editingItem.price?.toString() || "0")
         formData.append("bedrooms", editingItem.bedrooms?.toString() || "0")
         formData.append("bathrooms", editingItem.bathrooms?.toString() || "0")
-        formData.append("size", editingItem.size || "")
+        formData.append("size", editingItem.size?.toString() || "0")
         formData.append("yearBuilt", editingItem.yearBuilt?.toString() || "")
-        formData.append("floors", editingItem.floors?.toString() || "")
+        formData.append("floors", editingItem.floors?.toString() || "1")
         formData.append("parkingSpaces", editingItem.parkingSpaces?.toString() || "0")
+        formData.append("type", editingItem.type || "sale")
+        formData.append("condition", editingItem.condition || "used")
+        formData.append("description", editingItem.description || "")
+        formData.append("city", editingItem.city || "")
+        formData.append("region", editingItem.region || "")
+        formData.append("address", editingItem.address || "")
+        formData.append("kebele", editingItem.kebele || "")
+        formData.append("owner", editingItem.owner || "")
+        formData.append("status", editingItem.status || "available")
+
+        // Add amenities as JSON string
+        if (editingItem.amenities && editingItem.amenities.length > 0) {
+          formData.append("amenities", JSON.stringify(editingItem.amenities))
+        }
+      } else if (selectedCategory === "lands") {
+        // Land-specific fields
+        formData.append("title", editingItem.title || "")
+        const sizeData = {
+          value: editingItem.sizeValue?.toString() || "0",
+          unit: editingItem.sizeUnit || "hectare",
+        }
+        formData.append("size", JSON.stringify(sizeData))
+        formData.append("price", editingItem.price?.toString() || "0")
+        formData.append("pricePerSqm", editingItem.pricePerSqm?.toString() || "0")
+        formData.append("zoning", editingItem.zoning || "")
+        formData.append("landUse", editingItem.landUse || "")
+        formData.append("topography", editingItem.topography || "")
+        formData.append("soilType", editingItem.soilType || "")
+        formData.append("waterAccess", editingItem.waterAccess || "none")
+        formData.append("electricityAccess", editingItem.electricityAccess?.toString() || "false")
+        formData.append("roadAccess", editingItem.roadAccess?.toString() || "false")
         formData.append("type", editingItem.type || "sale")
         formData.append("description", editingItem.description || "")
         formData.append("city", editingItem.city || "")
         formData.append("region", editingItem.region || "")
-        formData.append("zone", editingItem.zone || "")
         formData.append("address", editingItem.address || "")
-        formData.append("owner", editingItem.owner || "")
-        formData.append("status", editingItem.status || "available")
-      } else if (selectedCategory === "lands") {
-        formData.append("title", editingItem.title || "")
-        formData.append("sizeValue", editingItem.sizeValue?.toString() || "0")
-        formData.append("sizeUnit", editingItem.sizeUnit || "hectare")
-        formData.append("price", editingItem.price?.toString() || "0")
-        formData.append("zoning", editingItem.zoning || "")
-        formData.append("landUse", editingItem.landUse || "")
-        formData.append("topography", editingItem.topography || "")
-        formData.append("waterAccess", editingItem.waterAccess || "none")
-        formData.append("description", editingItem.description || "")
-        formData.append("city", editingItem.city || "")
-        formData.append("region", editingItem.region || "")
-        formData.append("zone", editingItem.zone || "")
-        formData.append("address", editingItem.address || "")
+        formData.append("kebele", editingItem.kebele || "")
         formData.append("owner", editingItem.owner || "")
         formData.append("status", editingItem.status || "available")
       } else if (selectedCategory === "machines") {
-        const machineData = {
-          title: editingItem.title || "",
-          category: editingItem.category || "",
-          brand: editingItem.brand || "",
-          price: Number.parseInt(editingItem.price?.toString() || "0"),
-          type: editingItem.type || "sale",
-          condition: editingItem.condition || "used",
-          description: editingItem.description || "",
-          address: editingItem.address || "",
-          city: editingItem.city || "",
-          owner: editingItem.owner || "",
-          status: editingItem.status || "available",
+        // Machine-specific fields
+        formData.append("title", editingItem.title || "")
+        formData.append("category", editingItem.category || "")
+        formData.append("brand", editingItem.brand || "")
+        formData.append("model", editingItem.model || "")
+        formData.append("price", editingItem.price?.toString() || "0")
+        formData.append("year", editingItem.yearManufactured?.toString() || "")
+        formData.append("hoursUsed", editingItem.hoursUsed?.toString() || "0")
+        formData.append("type", editingItem.type || "sale")
+        formData.append("condition", editingItem.condition || "used")
+        formData.append("description", editingItem.description || "")
+        formData.append("city", editingItem.city || "")
+        formData.append("region", editingItem.region || "")
+        formData.append("address", editingItem.address || "")
+        formData.append("kebele", editingItem.kebele || "")
+        formData.append("owner", editingItem.owner || "")
+        formData.append("status", editingItem.status || "available")
+
+        // Add specifications as JSON string
+        if (editingItem.specifications && editingItem.specifications.length > 0) {
+          formData.append("specifications", JSON.stringify(editingItem.specifications))
         }
-
-        // Add optional fields only if they have values
-        if (editingItem.subcategory) machineData.subcategory = editingItem.subcategory
-        if (editingItem.model) machineData.model = editingItem.model
-        if (editingItem.yearManufactured)
-          machineData.yearManufactured = Number.parseInt(editingItem.yearManufactured.toString())
-        if (editingItem.region) machineData.region = editingItem.region
-        if (editingItem.zone) machineData.zone = editingItem.zone
-
-        console.log("[v0] Machine data being sent as JSON:", machineData)
-
-        const baseUrl = "https://car-house-land.onrender.com/api"
-        let apiEndpoint = ""
-
-        switch (selectedCategory) {
-          case "cars":
-            apiEndpoint = "cars"
-            break
-          case "houses":
-            apiEndpoint = "properties" // Assuming houses use properties endpoint
-            break
-          case "lands":
-            apiEndpoint = "lands"
-            break
-          case "machines":
-            apiEndpoint = "machines"
-            break
-          default:
-            throw new Error(`Unknown category: ${selectedCategory}`)
-        }
-
-        const url = editingItem.id
-          ? `https://car-house-land.onrender.com/api/${apiEndpoint}/${editingItem.id}`
-          : `https://car-house-land.onrender.com/api/${apiEndpoint}`
-
-        const method = editingItem.id ? "PUT" : "POST"
-
-        console.log(`[v0] Making API request:`, method, url)
-
-        const response = await fetch(url, {
-          method,
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(machineData),
-        })
-
-        console.log(`[v0] ${selectedCategory} save response status:`, response.status)
-
-        if (response.ok) {
-          const result = await response.json()
-          console.log(`[v0] ${selectedCategory} save success:`, result)
-          alert("Machine added successfully!")
-        } else {
-          const errorData = await response.json().catch(() => ({}))
-          const errorText = await response.text().catch(() => "Unknown error")
-          console.error(`[v0] Failed to save ${selectedCategory}:`, {
-            status: response.status,
-            statusText: response.statusText,
-            errorData,
-            errorText,
-          })
-          alert(`Failed to save ${selectedCategory}: ${errorData.message || errorText}`)
-        }
-        return
       }
 
       // Add image files for all categories
@@ -936,31 +855,11 @@ export function AdminDashboard() {
           throw new Error(`Unknown category: ${selectedCategory}`)
       }
 
-      const url = editingItem.id
-        ? `https://car-house-land.onrender.com/api/${apiEndpoint}/${editingItem.id}`
-        : `https://car-house-land.onrender.com/api/${apiEndpoint}`
+      const url = editingItem.id ? `${baseUrl}/${apiEndpoint}/${editingItem.id}` : `${baseUrl}/${apiEndpoint}`
 
       const method = editingItem.id ? "PUT" : "POST"
 
       console.log(`[v0] Making API request:`, method, url)
-
-      if (selectedCategory === "machines") {
-        console.log("[v0] Machine API Request Details:")
-        console.log("[v0] - Method:", method)
-        console.log("[v0] - URL:", url)
-        console.log("[v0] - Token present:", !!token)
-        console.log("[v0] - FormData size:", formData.entries ? "FormData object" : "Not FormData")
-
-        // Log all FormData entries one more time for verification
-        console.log("[v0] Final FormData verification:")
-        for (const [key, value] of formData.entries()) {
-          if (value instanceof File) {
-            console.log(`[v0] ${key}: [File] ${value.name} (${value.size} bytes)`)
-          } else {
-            console.log(`[v0] ${key}: ${value}`)
-          }
-        }
-      }
 
       const response = await fetch(url, {
         method,
@@ -975,21 +874,28 @@ export function AdminDashboard() {
 
       if (response.ok) {
         const result = await response.json()
-        console.log(`[v0] ${selectedCategory} save success:`, result)
+        console.log(`[v0] ${selectedCategory} saved successfully:`, result)
 
-        if (selectedCategory === "machines") {
-          alert("Machine added successfully!")
-        }
+        // Close dialog and reset form
+        setIsDialogOpen(false)
+        setEditingItem(null)
+        setUploadedImages([])
+
+        // Refresh listings if needed
+        // fetchListings(); // Implement this if you have a listings fetch function
       } else {
-        const errorData = await response.json().catch(() => ({}))
-        console.log(`[v0] Failed to save ${selectedCategory}:`, {
+        const errorData = await response.json().catch(() => null)
+        const errorText = await response.text().catch(() => "Unknown error")
+
+        console.error(`[v0] Failed to save ${selectedCategory}:`, {
           status: response.status,
           statusText: response.statusText,
           errorData,
-          errorText: response.statusText || "Unknown error",
+          errorText,
         })
 
-        alert(`Failed to save ${selectedCategory}: ${errorData.message || response.statusText || "Unknown error"}`)
+        // Show user-friendly error message
+        alert(`Failed to save ${selectedCategory}: ${errorData?.message || errorText || "Unknown error"}`)
       }
     } catch (error) {
       console.error(`[v0] Error saving ${selectedCategory}:`, error)
@@ -1002,18 +908,41 @@ export function AdminDashboard() {
     setIsDealDetailOpen(true)
   }
 
-  const handleAcceptDeal = (dealId: string) => {
-    updateDealStatus(dealId, "accepted")
-  }
-
-  const handleRejectDeal = (dealId: string) => {
-    if (confirm("Are you sure you want to reject this deal?")) {
-      updateDealStatus(dealId, "rejected")
+  const handleAcceptDeal = async (dealId: string) => {
+    try {
+      await updateDealStatus(dealId, "approved")
+      // Refresh deals to get updated data
+      await refreshDeals()
+    } catch (error) {
+      console.error("Error accepting deal:", error)
     }
   }
 
-  const handleCompleteDeal = (dealId: string) => {
-    updateDealStatus(dealId, "completed")
+  const handleRejectDeal = async (dealId: string) => {
+    try {
+      await updateDealStatus(dealId, "rejected")
+      await refreshDeals()
+    } catch (error) {
+      console.error("Error rejecting deal:", error)
+    }
+  }
+
+  const handleCompleteDeal = async (dealId: string) => {
+    try {
+      await updateDealStatus(dealId, "completed")
+      await refreshDeals()
+    } catch (error) {
+      console.error("Error completing deal:", error)
+    }
+  }
+
+  const handleCancelDeal = async (dealId: string, reason?: string) => {
+    try {
+      await updateDealStatus(dealId, "cancelled", reason)
+      await refreshDeals()
+    } catch (error) {
+      console.error("Error cancelling deal:", error)
+    }
   }
 
   const handleIncompleteDeal = (dealId: string) => {
@@ -1418,7 +1347,10 @@ export function AdminDashboard() {
                 <CardContent>
                   <ChartContainer
                     config={{
-                      revenue: { label: "Revenue", color: "var(--color-brand-blue)" },
+                      revenue: {
+                        label: "Revenue",
+                        color: "var(--color-brand-blue)",
+                      },
                     }}
                     className="h-[200px] sm:h-[250px] md:h-[300px]"
                   >
@@ -1433,7 +1365,13 @@ export function AdminDashboard() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" />
                         <YAxis />
-                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              formatter={(value, name) => [`$${Number(value).toLocaleString()}`, name || "Revenue"]}
+                            />
+                          }
+                        />
                         <Area
                           type="monotone"
                           dataKey="revenue"
@@ -1458,7 +1396,10 @@ export function AdminDashboard() {
                 <CardContent>
                   <ChartContainer
                     config={{
-                      users: { label: "Users", color: "var(--color-brand-purple)" },
+                      users: {
+                        label: "Active Users",
+                        color: "var(--color-brand-purple)",
+                      },
                     }}
                     className="h-[200px] sm:h-[250px] md:h-[300px]"
                   >
@@ -1467,7 +1408,13 @@ export function AdminDashboard() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" />
                         <YAxis />
-                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
+                            />
+                          }
+                        />
                         <Bar dataKey="users" fill="var(--color-brand-purple)" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -1490,8 +1437,14 @@ export function AdminDashboard() {
                 <CardContent>
                   <ChartContainer
                     config={{
-                      visitors: { label: "Visitors", color: "var(--color-brand-orange)" },
-                      pageViews: { label: "Page Views", color: "var(--color-brand-blue)" },
+                      visitors: {
+                        label: "Visitors",
+                        color: "var(--color-brand-orange)",
+                      },
+                      pageViews: {
+                        label: "Page Views",
+                        color: "var(--color-brand-blue)",
+                      },
                     }}
                     className="h-[200px] sm:h-[250px] md:h-[300px]"
                   >
@@ -1500,7 +1453,13 @@ export function AdminDashboard() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="time" />
                         <YAxis />
-                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Count"]}
+                            />
+                          }
+                        />
                         <Line type="monotone" dataKey="visitors" stroke="var(--color-brand-orange)" strokeWidth={3} />
                         <Line type="monotone" dataKey="pageViews" stroke="var(--color-brand-blue)" strokeWidth={3} />
                         <Legend />
@@ -1521,7 +1480,10 @@ export function AdminDashboard() {
                 <CardContent>
                   <ChartContainer
                     config={{
-                      deals: { label: "Completed Deals", color: "#10b981" },
+                      deals: {
+                        label: "Completed Deals",
+                        color: "#10b981",
+                      },
                     }}
                     className="h-[200px] sm:h-[250px] md:h-[300px]"
                   >
@@ -1530,7 +1492,13 @@ export function AdminDashboard() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="month" />
                         <YAxis />
-                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Deals"]}
+                            />
+                          }
+                        />
                         <Bar dataKey="deals" fill="#10b981" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -1557,33 +1525,7 @@ export function AdminDashboard() {
                       <SelectItem value="machines">Machines</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Dialog
-                    open={isDialogOpen}
-                    onOpenChange={(open) => {
-                      setIsDialogOpen(open)
-                      if (open && !editingItem) {
-                        const defaultItem = {
-                          title: "",
-                          category: selectedCategory === "machines" ? "construction" : "",
-                          subcategory: "",
-                          brand: "",
-                          model: "",
-                          price: "",
-                          yearManufactured: new Date().getFullYear().toString(),
-                          type: "sale",
-                          condition: "used",
-                          description: "",
-                          city: "",
-                          region: "",
-                          zone: "",
-                          address: "",
-                          owner: user?.id || "",
-                          status: "available",
-                        }
-                        setEditingItem(defaultItem)
-                      }
-                    }}
-                  >
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm">
                         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
@@ -1793,7 +1735,7 @@ export function AdminDashboard() {
                                     onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
-                                      <SelectValue placeholder="Select condition" />
+                                      <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="new">New</SelectItem>
@@ -1801,18 +1743,6 @@ export function AdminDashboard() {
                                       <SelectItem value="refurbished">Refurbished</SelectItem>
                                     </SelectContent>
                                   </Select>
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Zone</Label>
-                                  <Input
-                                    value={editingItem?.zone || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, zone: e.target.value })}
-                                    className="text-sm"
-                                    placeholder="Optional zone"
-                                  />
                                 </div>
                               </div>
                             </>
@@ -1848,7 +1778,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Type *</Label>
                                   <Select
                                     value={editingItem?.type || "sale"}
-                                    onValueChange={(value) => setEditingItem({ ...editingItem, type: value })}
+                                    onChange={(value) => setEditingItem({ ...editingItem, type: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue />
@@ -1902,7 +1832,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Fuel Type *</Label>
                                   <Select
                                     value={editingItem?.fuelType || "gasoline"}
-                                    onValueChange={(value) => setEditingItem({ ...editingItem, fuelType: value })}
+                                    onChange={(value) => setEditingItem({ ...editingItem, fuelType: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue />
@@ -1921,7 +1851,7 @@ export function AdminDashboard() {
                                     <Label className="text-xs sm:text-sm font-medium">Condition *</Label>
                                     <Select
                                       value={editingItem?.condition || "used"}
-                                      onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
+                                      onChange={(value) => setEditingItem({ ...editingItem, condition: value })}
                                     >
                                       <SelectTrigger className="text-xs sm:text-sm">
                                         <SelectValue />
@@ -1936,7 +1866,7 @@ export function AdminDashboard() {
                                     <Label className="text-xs sm:text-sm font-medium">Transmission *</Label>
                                     <Select
                                       value={editingItem?.transmission || "manual"}
-                                      onValueChange={(value) => setEditingItem({ ...editingItem, transmission: value })}
+                                      onChange={(value) => setEditingItem({ ...editingItem, transmission: value })}
                                     >
                                       <SelectTrigger className="text-xs sm:text-sm">
                                         <SelectValue />
@@ -1954,7 +1884,7 @@ export function AdminDashboard() {
                                 <Label className="text-xs sm:text-sm font-medium">Body Type *</Label>
                                 <Select
                                   value={editingItem?.bodyType || "sedan"}
-                                  onValueChange={(value) => setEditingItem({ ...editingItem, bodyType: value })}
+                                  onChange={(value) => setEditingItem({ ...editingItem, bodyType: value })}
                                 >
                                   <SelectTrigger className="text-xs sm:text-sm">
                                     <SelectValue />
@@ -2021,7 +1951,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
                                   <Select
                                     value={editingItem?.owner || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, owner: e.target.value })}
+                                    onChange={(value) => setEditingItem({ ...editingItem, owner: value })} // Use onValueChange
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue
@@ -2029,11 +1959,21 @@ export function AdminDashboard() {
                                       />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {owners.map((owner) => (
-                                        <SelectItem key={owner._id} value={owner._id}>
-                                          {owner.fullName}
+                                      {isLoadingOwners ? (
+                                        <SelectItem value="" disabled>
+                                          Loading owners...
                                         </SelectItem>
-                                      ))}
+                                      ) : owners.length === 0 ? (
+                                        <SelectItem value="" disabled>
+                                          No owners available
+                                        </SelectItem>
+                                      ) : (
+                                        owners.map((owner) => (
+                                          <SelectItem key={owner._id} value={owner._id}>
+                                            {owner.fullName}
+                                          </SelectItem>
+                                        ))
+                                      )}
                                     </SelectContent>
                                   </Select>
                                 </div>
@@ -2301,7 +2241,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Size Unit</Label>
                                   <Select
                                     value={editingItem?.sizeUnit || "hectare"}
-                                    onChange={(value) => setEditingItem({ ...editingItem, sizeUnit: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, sizeUnit: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue />
@@ -2319,7 +2259,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Zoning *</Label>
                                   <Select
                                     value={editingItem?.zoning || ""}
-                                    onChange={(value) => setEditingItem({ ...editingItem, zoning: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, zoning: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue placeholder="Select zoning" />
@@ -2338,7 +2278,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Land Use *</Label>
                                   <Select
                                     value={editingItem?.landUse || ""}
-                                    onChange={(value) => setEditingItem({ ...editingItem, landUse: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, landUse: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue placeholder="Select land use" />
@@ -2361,7 +2301,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Topography *</Label>
                                   <Select
                                     value={editingItem?.topography || ""}
-                                    onChange={(value) => setEditingItem({ ...editingItem, topography: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, topography: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue placeholder="Select topography" />
@@ -2380,7 +2320,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
                                   <Select
                                     value={editingItem?.waterAccess || "none"}
-                                    onChange={(value) => setEditingItem({ ...editingItem, waterAccess: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, waterAccess: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue />
@@ -2586,6 +2526,7 @@ export function AdminDashboard() {
                       <TableHead className="text-xs sm:text-sm">Price</TableHead>
                       <TableHead className="text-xs sm:text-sm">Location</TableHead>
                       <TableHead className="text-xs sm:text-sm">Type</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Posted Date</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -2601,6 +2542,9 @@ export function AdminDashboard() {
                             <Badge variant={item.listingType === "sale" ? "default" : "secondary"}>
                               {item.listingType === "sale" ? "For Sale" : "For Rent"}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">
+                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
@@ -2651,7 +2595,7 @@ export function AdminDashboard() {
                       className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
                       onClick={() => setEditingUser(null)}
                     >
-                      <Plus className="w-3 h-3 sm:w-4 sm:w-4 mr-2" />
+                      <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Add User
                     </Button>
                   </DialogTrigger>
@@ -2915,6 +2859,7 @@ export function AdminDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="text-xs sm:text-sm">Deal ID</TableHead>
                       <TableHead className="text-xs sm:text-sm">Item</TableHead>
                       <TableHead className="text-xs sm:text-sm">Buyer</TableHead>
                       <TableHead className="text-xs sm:text-sm">Amount</TableHead>
@@ -2926,15 +2871,27 @@ export function AdminDashboard() {
                   <TableBody>
                     {deals.slice(0, 10).map((deal) => (
                       <TableRow key={deal.id}>
+                        <TableCell className="text-xs sm:text-sm font-mono">
+                          {deal.dealId || deal.id.slice(-8)}
+                        </TableCell>
                         <TableCell className="text-xs sm:text-sm">
                           <div className="flex items-center space-x-2">
                             {getItemIcon(deal.itemType)}
-                            <span className="font-medium">{deal.itemTitle}</span>
+                            <span className="font-medium">{deal.item.title}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs sm:text-sm">{deal.buyerName}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+  <div>
+    <p className="font-medium">
+      {deal.buyer && deal.buyer.fullName ? deal.buyer.fullName : "N/A"}
+    </p>
+    <p className="text-gray-500">
+      {deal.buyer && deal.buyer.email ? deal.buyer.email : "N/A"}
+    </p>
+  </div>
+</TableCell>
                         <TableCell className="text-xs sm:text-sm font-medium">
-                          ETB {(deal.amount || 0).toLocaleString()}
+                          ETB {(deal.originalPrice || 0).toLocaleString()}
                         </TableCell>
                         <TableCell>
                           <Badge className={`${getStatusColor(deal.status)} text-xs flex items-center space-x-1`}>
@@ -2974,13 +2931,23 @@ export function AdminDashboard() {
                                 </Button>
                               </>
                             )}
-                            {deal.status === "accepted" && (
+                            {deal.status === "approved" && (
                               <Button
                                 size="sm"
                                 className="text-xs bg-blue-600 hover:bg-blue-700"
                                 onClick={() => handleCompleteDeal(deal.id)}
                               >
                                 Complete
+                              </Button>
+                            )}
+                            {(deal.status === "pending" || deal.status === "approved") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs text-red-600 hover:text-red-700 bg-transparent"
+                                onClick={() => handleCancelDeal(deal.id, "Cancelled by admin")}
+                              >
+                                Cancel
                               </Button>
                             )}
                           </div>
