@@ -14,22 +14,22 @@ export function Home() {
 
   const videos = [
     {
-      src: "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4",
+      src: "/videos/car.mp4",
       alt: "Modern luxury car showcase",
       category: "cars",
     },
     {
-      src: "https://videos.pexels.com/video-files/5524186/5524186-uhd_2560_1440_25fps.mp4",
+      src: "/videos/house.mp4",
       alt: "Modern architectural design showcase",
       category: "houses",
     },
     {
-      src: "https://videos.pexels.com/video-files/4992249/4992249-uhd_2560_1440_25fps.mp4",
+      src: "/videos/land.mp4",
       alt: "Beautiful landscapes and real estate plots",
       category: "lands",
     },
     {
-      src: "https://videos.pexels.com/video-files/3195394/3195394-uhd_2560_1440_25fps.mp4",
+      src: "/videos/machine.mp4",
       alt: "Construction machines and industrial equipment",
       category: "machines",
     },
@@ -38,7 +38,7 @@ export function Home() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentVideoIndex((prevIndex) => (prevIndex + 1) % videos.length)
-    }, 4000)
+    }, 7000)
 
     return () => clearInterval(interval)
   }, [videos.length])
