@@ -1592,6 +1592,8 @@ export function AdminDashboard() {
                                   value={editingItem?.owner || ""}
                                   onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })}
                                 >
+
+
                                   <SelectTrigger className="text-xs sm:text-sm">
                                     <SelectValue placeholder="Select owner" />
                                   </SelectTrigger>
@@ -1954,7 +1956,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
                                   <Select
                                     value={editingItem?.owner || ""}
-                                    onChange={(value) => setEditingItem({ ...editingItem, owner: value })} // Use onValueChange
+                                   onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })} // Use onValueChange
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue
