@@ -23,7 +23,7 @@ const generateRefreshToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
     "land",
-    { expiresIn: '7d' }
+    { expiresIn: '30d' }
   );
 };
  

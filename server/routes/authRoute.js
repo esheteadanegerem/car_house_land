@@ -34,7 +34,7 @@ router.post('/register', registerValidation, validateRequest, register);
 router.post('/login', authLimiter, loginValidation, validateRequest, login); // Added loginValidation
 router.post('/forgot-password', authLimiter, forgotPasswordValidation, validateRequest, sensitiveOperationLimit, forgotPassword);
 router.put('/reset-password/:token', authLimiter, resetPasswordValidation, validateRequest, resetPassword);
-router.post('/refresh-token', refreshTokenValidation, validateRequest, refreshToken);
+//router.post('/refresh-token', refreshTokenValidation, validateRequest, refreshToken);
 
 // Email verification routes
 router.post('/request-email-verification', authLimiter, protect, requestEmailVerification);

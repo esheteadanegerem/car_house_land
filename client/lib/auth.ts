@@ -65,10 +65,9 @@ class AuthService {
     if (refreshToken) {
       localStorage.setItem("refreshToken", refreshToken)
     }
-
-    document.cookie = `accessToken=${accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
+    document.cookie = `accessToken=${encodeURIComponent(accessToken)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
     if (refreshToken) {
-      document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
+      document.cookie = `refreshToken=${encodeURIComponent(refreshToken)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
     }
   }
 
@@ -77,7 +76,6 @@ class AuthService {
     localStorage.removeItem("accessToken")
     localStorage.removeItem("refreshToken")
     localStorage.removeItem("user")
-
     document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     document.cookie = "user=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
@@ -85,9 +83,9 @@ class AuthService {
 
   private setUser(user: User): void {
     if (typeof window === "undefined") return
-    localStorage.setItem("user", JSON.stringify(user))
-
-    document.cookie = `user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
+    const userData = JSON.stringify(user)
+    localStorage.setItem("user", userData)
+    document.cookie = `user=${encodeURIComponent(userData)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
   }
 
   getStoredUser(): User | null {
@@ -105,20 +103,14 @@ class AuthService {
     try {
       const response = await fetch(`${API_BASE_URL}/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
-
       const result = await response.json()
       return result
     } catch (error) {
       console.error("Registration error:", error)
-      return {
-        status: "error",
-        message: "Registration failed. Please try again.",
-      }
+      return { status: "error", message: "Registration failed. Please try again." }
     }
   }
 
@@ -126,20 +118,14 @@ class AuthService {
     try {
       const response = await fetch(`${API_BASE_URL}/verify-email`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code }),
       })
-
       const result = await response.json()
       return result
     } catch (error) {
       console.error("Email verification error:", error)
-      return {
-        status: "error",
-        message: "Email verification failed. Please try again.",
-      }
+      return { status: "error", message: "Email verification failed. Please try again." }
     }
   }
 
@@ -147,26 +133,18 @@ class AuthService {
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
-
       const result = await response.json()
-
       if (result.status === "success" && result.data) {
         this.setTokens(result.data.token, result.data.refreshToken)
         this.setUser(result.data.user)
       }
-
       return result
     } catch (error) {
       console.error("Login error:", error)
-      return {
-        status: "error",
-        message: "Login failed. Please try again.",
-      }
+      return { status: "error", message: "Login failed. Please try again." }
     }
   }
 
@@ -177,33 +155,25 @@ class AuthService {
         console.log("[v0] No refresh token available")
         return false
       }
-
       console.log("[v0] Attempting to refresh token...")
       const response = await fetch(`${API_BASE_URL}/refresh-token`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refreshToken }),
       })
-
       const result = await response.json()
       console.log("[v0] Refresh token response:", result)
-
       if (result.status === "success" && result.data) {
         this.setTokens(result.data.token, result.data.refreshToken)
         if (result.data.user) {
           this.setUser(result.data.user)
         }
         console.log("[v0] Token refreshed successfully")
-
         if (typeof window !== "undefined") {
           window.location.reload()
         }
-
         return true
       }
-
       console.log("[v0] Token refresh failed:", result.message)
       return false
     } catch (error) {
@@ -219,7 +189,6 @@ class AuthService {
         console.log("[v0] No token available for getMe")
         return null
       }
-
       console.log("[v0] Fetching current user...")
       const response = await fetch(`${API_BASE_URL}/me`, {
         method: "GET",
@@ -228,13 +197,10 @@ class AuthService {
           "Content-Type": "application/json",
         },
       })
-
       if (response.status === 401) {
         console.log("[v0] Token expired, attempting refresh...")
-        // Try to refresh token
         const refreshed = await this.refreshToken()
         if (refreshed) {
-          // Retry with new token
           const newToken = this.getStoredToken()
           console.log("[v0] Retrying getMe with new token...")
           const retryResponse = await fetch(`${API_BASE_URL}/me`, {
@@ -255,14 +221,12 @@ class AuthService {
         this.clearTokens()
         return null
       }
-
       const result = await response.json()
       if (result.status === "success" && result.data) {
         this.setUser(result.data.user)
         console.log("[v0] User fetched successfully")
         return result.data.user
       }
-
       console.log("[v0] Failed to fetch user:", result.message)
       return null
     } catch (error) {
@@ -294,20 +258,14 @@ class AuthService {
     try {
       const response = await fetch(`${API_BASE_URL}/forgot-password`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       })
-
       const result = await response.json()
       return result
     } catch (error) {
       console.error("Forgot password error:", error)
-      return {
-        status: "error",
-        message: "Failed to send reset code. Please try again.",
-      }
+      return { status: "error", message: "Failed to send reset code. Please try again." }
     }
   }
 
@@ -315,26 +273,18 @@ class AuthService {
     try {
       const response = await fetch(`${API_BASE_URL}/reset-password`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, password }),
       })
-
       const result = await response.json()
-
       if (result.status === "success" && result.data) {
         this.setTokens(result.data.token, result.data.refreshToken)
         this.setUser(result.data.user)
       }
-
       return result
     } catch (error) {
       console.error("Reset password error:", error)
-      return {
-        status: "error",
-        message: "Password reset failed. Please try again.",
-      }
+      return { status: "error", message: "Password reset failed. Please try again." }
     }
   }
 

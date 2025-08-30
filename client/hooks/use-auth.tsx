@@ -80,12 +80,12 @@ export function useAuth() {
         console.log("[v0] Login successful")
         setUser(response.data.user)
         setIsAuthenticated(true)
-        await new Promise((resolve) => setTimeout(resolve, 0)); // Ensure state update
-        router.replace(response.data.user.role === "admin" ? "/dashboard/admin" : "/dashboard/user")
+        await new Promise((resolve) => setTimeout(resolve, 100)) // Ensure cookies are set
+        const url = response.data.user.role === "admin" ? "/dashboard/admin" : "/dashboard/user"
+        window.location.href = url // Force full reload
       } else {
         console.log("[v0] Login failed:", response.message)
       }
-
       return response
     } catch (error) {
       console.error("[v0] Login error:", error)
@@ -133,26 +133,19 @@ export function useAuth() {
   const logout = async (): Promise<void> => {
     try {
       console.log("[v0] Logging out...")
-
-      // Clear auth state immediately for responsive UI
       setUser(null)
       setIsAuthenticated(false)
-
-      // Call logout API
       await authService.logout()
       console.log("[v0] Logout successful")
-
       setTimeout(() => {
         if (typeof window !== "undefined") {
           window.location.href = "/"
         }
-      }, 1500) // Give time for loading screen to be visible
+      }, 1000)
     } catch (error) {
       console.error("[v0] Logout error:", error)
-      // Still clear state even if API call fails
       setUser(null)
       setIsAuthenticated(false)
-
       setTimeout(() => {
         if (typeof window !== "undefined") {
           window.location.href = "/"
@@ -181,12 +174,13 @@ export function useAuth() {
     try {
       setLoading(true)
       const response = await authService.resetPassword(email, code, password)
-
       if (response.status === "success" && response.data) {
         setUser(response.data.user)
         setIsAuthenticated(true)
+        await new Promise((resolve) => setTimeout(resolve, 100)) // Ensure cookies are set
+        const url = response.data.user.role === "admin" ? "/dashboard/admin" : "/dashboard/user"
+        window.location.href = url // Force full reload
       }
-
       return response
     } catch (error) {
       console.error("Reset password error:", error)
@@ -211,33 +205,33 @@ export function useAuth() {
 
   useEffect(() => {
     if (!initializing && isAuthenticated) {
-      const interval = setInterval(
-        () => {
-          console.log("[v0] Periodic auth check...")
-          checkAuth()
-        },
-        5 * 60 * 1000,
-      )
-
+      const interval = setInterval(() => {
+        console.log("[v0] Periodic auth check...")
+        checkAuth()
+      }, 5 * 60 * 1000)
       return () => clearInterval(interval)
     }
   }, [checkAuth, initializing, isAuthenticated])
 
   useEffect(() => {
     const checkSyncHeader = async () => {
-      const response = await fetch("/api/check-auth-sync", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      const headers = response.headers;
-      if (headers.get("x-auth-sync") === "pending") {
-        console.log("[v0] Auth sync pending, checking auth...");
-        await checkAuth();
+      try {
+        const response = await fetch("/auth-sync-check", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        })
+        const headers = response.headers
+        if (headers.get("x-auth-sync") === "pending") {
+          console.log("[v0] Auth sync pending, forcing refresh...")
+          await checkAuth()
+          window.location.reload() // Force refresh if sync is pending
+        }
+      } catch (error) {
+        console.error("[v0] Auth sync check failed:", error)
       }
-    };
-
-    checkSyncHeader();
-  }, [checkAuth]);
+    }
+    checkSyncHeader()
+  }, [checkAuth])
 
   return {
     user,
