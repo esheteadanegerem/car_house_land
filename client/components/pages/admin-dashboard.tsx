@@ -223,18 +223,15 @@ export function AdminDashboard() {
   }, [activeTab])
 
   if (!user || user.role !== "admin") {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-green-50 py-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 className="text-responsive-2xl font-bold text-gray-900">Access Pending</h1>
-        <p className="text-responsive-base text-gray-600 mt-2">
-          Please wait while your access is being verified. You’ll be able to continue once privileges are granted.
-        </p>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-responsive-2xl font-bold text-gray-900">Access Denied</h1>
+          <p className="text-responsive-base text-gray-600 mt-2">You need admin privileges to access this page</p>
+        </div>
       </div>
-    </div>
-  )
-}
-
+    )
+  }
 
   const totalListings = cars.length + houses.length + lands.length + machines.length
   const totalRevenue = 2450000
