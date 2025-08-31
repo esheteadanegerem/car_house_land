@@ -99,7 +99,7 @@ const createDeal = async (req, res) => {
     const validItemTypes = ['Car', 'Property', 'Land', 'Machine'];
     if (!validItemTypes.includes(itemType)) {
       return res.status(400).json({
-        status: 'error',
+        status: 'error',  
         message: 'Invalid item type',
       });
     }
