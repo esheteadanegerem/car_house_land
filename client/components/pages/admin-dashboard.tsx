@@ -1549,7 +1549,7 @@ const handleDeleteItem = async (item: any) => {
             </div>
           </TabsContent>
 
-          {/* ... existing code for other tabs ... */}
+          
           <TabsContent value="listings" className="space-y-4 sm:space-y-6">
   <Card>
     <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-4">
@@ -1579,7 +1579,6 @@ const handleDeleteItem = async (item: any) => {
                 {editingItem ? "Edit" : "Add New"} {selectedCategory.slice(0, -1)}
               </DialogTitle>
             </DialogHeader>
-            {/* Existing form content for adding/editing items */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-3 sm:space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -1601,7 +1600,6 @@ const handleDeleteItem = async (item: any) => {
                     />
                   </div>
                 </div>
-                {/* ... (rest of the form fields remain unchanged) ... */}
               </div>
               <div className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
@@ -1716,7 +1714,7 @@ const handleDeleteItem = async (item: any) => {
               <TableRow key={item.id}>
                 <TableCell className="font-medium text-xs sm:text-sm">{item.title}</TableCell>
                 <TableCell className="text-xs sm:text-sm">ETB {(item.price || 0).toLocaleString()}</TableCell>
-                <TableCell className="text-xs sm:text-sm">{item.location}</TableCell>
+                <TableCell className="text-xs sm:text-sm">{item.location || `${item.city}, ${item.region}`}</TableCell>
                 <TableCell className="text-xs sm:text-sm">
                   <Badge variant={item.listingType === "sale" ? "default" : "secondary"}>
                     {item.listingType === "sale" ? "For Sale" : "For Rent"}
@@ -1760,6 +1758,243 @@ const handleDeleteItem = async (item: any) => {
     </CardContent>
   </Card>
 
+  {/* View Detail Dialog */}
+  <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+    <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+      <DialogHeader>
+        <DialogTitle className="text-sm sm:text-base">
+          {viewingItem ? `View ${selectedCategory.slice(0, -1)} Details` : "Loading..."}
+        </DialogTitle>
+      </DialogHeader>
+      {viewingItem && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Title</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.title || "N/A"}</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Price</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                ETB {(viewingItem.price || 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Location</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                {viewingItem.location || `${viewingItem.city}, ${viewingItem.region}` || "N/A"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Listing Type</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                {viewingItem.listingType === "sale" ? "For Sale" : "For Rent"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Posted Date</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                {viewingItem.createdAt ? new Date(viewingItem.createdAt).toLocaleDateString() : "N/A"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Status</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.status || "N/A"}</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Description</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.description || "N/A"}</p>
+            </div>
+
+            {/* Category-specific fields */}
+            {selectedCategory === "cars" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Make</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.make || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Model</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Year</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.year || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.mileage || "N/A"} km</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Fuel Type</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.fuelType || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Transmission</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.transmission || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Features</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                    {viewingItem.features?.join(", ") || "N/A"}
+                  </p>
+                </div>
+              </>
+            )}
+            {selectedCategory === "houses" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Property Type</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.propertyType || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Bedrooms</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bedrooms || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Bathrooms</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bathrooms || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Size</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.size || "N/A"} sqm</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Year Built</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearBuilt || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Amenities</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                    {viewingItem.amenities?.join(", ") || "N/A"}
+                  </p>
+                </div>
+              </>
+            )}
+            {selectedCategory === "lands" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Size</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                    {viewingItem.sizeValue ? `${viewingItem.sizeValue} ${viewingItem.sizeUnit || "hectare"}` : "N/A"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Zoning</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.zoning || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Land Use</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.landUse || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Topography</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.topography || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.waterAccess || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Electricity Access</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                    {viewingItem.electricityAccess ? "Yes" : "No"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Road Access</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                    {viewingItem.roadAccess ? "Yes" : "No"}
+                  </p>
+                </div>
+              </>
+            )}
+            {selectedCategory === "machines" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Category</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.category || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Brand</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.brand || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Model</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Year Manufactured</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearManufactured || "N/A"}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Hours Used</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.hoursUsed || "N/A"} hours</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">Specifications</Label>
+                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                    {viewingItem.specifications?.join(", ") || "N/A"}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Images</Label>
+              {viewingItem.images && viewingItem.images.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
+                  {viewingItem.images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <div className="aspect-square relative overflow-hidden rounded-lg border">
+                        <img
+                          src={image || "/placeholder.svg"}
+                          alt={`Image ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {index === 0 && (
+                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+                          <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No images available</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Owner</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.owner || "N/A"}</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                {viewingItem.sellerName || "N/A"} | {viewingItem.sellerPhone || "N/A"} |{" "}
+                {viewingItem.sellerEmail || "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="flex justify-end mt-4 sm:mt-6">
+        <Button
+          variant="outline"
+          className="text-xs sm:text-sm bg-transparent"
+          onClick={() => {
+            setIsViewDialogOpen(false);
+            setViewingItem(null);
+          }}
+        >
+          Close
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+
   {/* Delete Confirmation Modal */}
   <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
     <DialogContent className="max-w-xs sm:max-w-md mx-4">
@@ -1793,7 +2028,7 @@ const handleDeleteItem = async (item: any) => {
       </div>
     </DialogContent>
   </Dialog>
-           </TabsContent>
+</TabsContent>
 
           <TabsContent value="users" className="space-y-4 sm:space-y-6">
             <Card>
