@@ -1006,11 +1006,45 @@ const handleView = async (item: any) => {
       alert(`Failed to save ${selectedCategory}. Please try again.`)
     }
   }
+const handleViewDeal = async (deal: Deal) => {
+  try {
+    // First set the basic deal data for immediate UI response
+    setSelectedDeal(deal);
+    setIsDealDetailOpen(true);
+    
+    // Fetch complete deal details from API
+    const token = authService.getStoredToken();
+    if (!token) {
+      console.error("No authentication token found");
+      // We'll still show the dialog with basic info
+      return;
+    }
 
-  const handleViewDeal = (deal: Deal) => {
-    setSelectedDeal(deal)
-    setIsDealDetailOpen(true)
+    const response = await fetch(`https://car-house-land.onrender.com/api/deals/${deal.id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch deal details');
+    }
+
+    const result = await response.json();
+    
+    if (result.status === 'success') {
+      // Update with detailed information from the API response
+      setSelectedDeal(result.data.deal);
+    } else {
+      throw new Error(result.message || 'Failed to fetch deal details');
+    }
+  } catch (error) {
+    console.error('Error fetching deal details:', error);
+    // We don't need to show an error to the user since we already have basic deal data
   }
+};
 
   const handleAcceptDeal = async (dealId: string) => {
     try {
@@ -2987,120 +3021,374 @@ const handleView = async (item: any) => {
               </CardContent>
             </Card>
           </TabsContent>
+<TabsContent value="deals" className="space-y-4 sm:space-y-6">
+  <Card>
+    <CardHeader className="pb-2 sm:pb-4">
+      <CardTitle className="flex items-center text-sm sm:text-base">
+        <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
+        Deal Management
+      </CardTitle>
+      <CardDescription className="text-xs sm:text-sm">Review and manage all platform deals</CardDescription>
+    </CardHeader>
+    <CardContent className="p-0">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-xs sm:text-sm">Deal ID</TableHead>
+            <TableHead className="text-xs sm:text-sm">Item</TableHead>
+            <TableHead className="text-xs sm:text-sm">Buyer</TableHead>
+            <TableHead className="text-xs sm:text-sm">Amount</TableHead>
+            <TableHead className="text-xs sm:text-sm">Status</TableHead>
+            <TableHead className="text-xs sm:text-sm">Date</TableHead>
+            <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {deals.slice(0, 10).map((deal) => (
+            <TableRow key={deal.id}>
+              <TableCell className="text-xs sm:text-sm font-mono">
+                {deal.dealId || deal.id.slice(-8)}
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                <div className="flex items-center space-x-2">
+                  {getItemIcon(deal.itemType)}
+                  <span className="font-medium">{deal.item.title}</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                <div>
+                  <p className="font-medium">
+                    {deal.buyer && deal.buyer.fullName ? deal.buyer.fullName : "N/A"}
+                  </p>
+                  <p className="text-gray-500">
+                    {deal.buyer && deal.buyer.email ? deal.buyer.email : "N/A"}
+                  </p>
+                </div>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm font-medium">
+                ETB {(deal.originalPrice || 0).toLocaleString()}
+              </TableCell>
+              <TableCell>
+                <Badge className={`${getStatusColor(deal.status)} text-xs flex items-center space-x-1`}>
+                  {getStatusIcon(deal.status)}
+                  <span>{deal.status}</span>
+                </Badge>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                {new Date(deal.createdAt).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <div className="flex space-x-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs bg-transparent"
+                    onClick={() => handleViewDeal(deal)}
+                  >
+                    <Eye className="w-3 h-3" />
+                  </Button>
+                  {deal.status === "pending" && (
+                    <>
+                      <Button
+                        size="sm"
+                        className="text-xs bg-green-600 hover:bg-green-700"
+                        onClick={() => handleAcceptDeal(deal.id)}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="text-xs"
+                        onClick={() => handleRejectDeal(deal.id)}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                  {deal.status === "approved" && (
+                    <Button
+                      size="sm"
+                      className="text-xs bg-blue-600 hover:bg-blue-700"
+                      onClick={() => handleCompleteDeal(deal.id)}
+                    >
+                      Complete
+                    </Button>
+                  )}
+                  {(deal.status === "pending" || deal.status === "approved") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs text-red-600 hover:text-red-700 bg-transparent"
+                      onClick={() => handleCancelDeal(deal.id, "Cancelled by admin")}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </CardContent>
+  </Card>
+  
+  {/* Deal Detail Dialog */}
+  <Dialog open={isDealDetailOpen} onOpenChange={setIsDealDetailOpen}>
+    <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+      <DialogHeader>
+        <DialogTitle className="text-sm sm:text-base">
+          Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8)}
+        </DialogTitle>
+      </DialogHeader>
+      {selectedDeal && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
+              <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="flex items-center space-x-2 mb-2">
+                  {getItemIcon(selectedDeal.itemType)}
+                  <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <span>Type:</span>
+                  <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
+                  
+                  <span>Price:</span>
+                  <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
+                  
+                  {selectedDeal.item?.make && (
+                    <>
+                      <span>Make:</span>
+                      <span className="font-medium">{selectedDeal.item.make}</span>
+                    </>
+                  )}
+                  
+                  {selectedDeal.item?.model && (
+                    <>
+                      <span>Model:</span>
+                      <span className="font-medium">{selectedDeal.item.model}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
 
-          <TabsContent value="deals" className="space-y-4 sm:space-y-6">
-            <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="flex items-center text-sm sm:text-base">
-                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
-                  Deal Management
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Review and manage all platform deals</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm">Deal ID</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Item</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Buyer</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Amount</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Date</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {deals.slice(0, 10).map((deal) => (
-                      <TableRow key={deal.id}>
-                        <TableCell className="text-xs sm:text-sm font-mono">
-                          {deal.dealId || deal.id.slice(-8)}
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          <div className="flex items-center space-x-2">
-                            {getItemIcon(deal.itemType)}
-                            <span className="font-medium">{deal.item.title}</span>
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <p className="font-medium text-sm">
+                  {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                  <span>Email:</span>
+                  <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
+                  
+                  <span>Phone:</span>
+                  <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
+                  
+                  {selectedDeal.buyer?.address && (
+                    <>
+                      <span>Address:</span>
+                      <span className="font-medium">
+                        {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <p className="font-medium text-sm">
+                  {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                  <span>Email:</span>
+                  <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
+                  
+                  <span>Phone:</span>
+                  <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
+                  {getStatusIcon(selectedDeal.status)}
+                  <span className="capitalize">{selectedDeal.status}</span>
+                </Badge>
+                
+                {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
+                  <div className="mt-3">
+                    <Label className="text-xs font-medium">Status History</Label>
+                    <div className="space-y-1 mt-1">
+                      {selectedDeal.statusHistory.map((history: any, index: number) => (
+                        <div key={index} className="flex justify-between text-xs">
+                          <span className="capitalize">{history.status}</span>
+                          <span className="text-gray-500">
+                            {new Date(history.timestamp).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <span>Original Price:</span>
+                  <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
+                  
+                  <span>Final Price:</span>
+                  <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
+                  
+                  <span>Commission:</span>
+                  <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
+                  
+                  <span>Platform Fee:</span>
+                  <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
+                  
+                  <span>Payment Method:</span>
+                  <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
+                  
+                  {selectedDeal.paymentStatus && (
+                    <>
+                      <span>Payment Status:</span>
+                      <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <span>Created:</span>
+                  <span className="font-medium">
+                    {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                    {new Date(selectedDeal.createdAt).toLocaleTimeString()}
+                  </span>
+                  
+                  <span>Last Updated:</span>
+                  <span className="font-medium">
+                    {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                    {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
+                  </span>
+                  
+                  {selectedDeal.approvedAt && (
+                    <>
+                      <span>Approved:</span>
+                      <span className="font-medium">
+                        {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
+                        {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
+                      </span>
+                    </>
+                  )}
+                  
+                  {selectedDeal.completedAt && (
+                    <>
+                      <span>Completed:</span>
+                      <span className="font-medium">
+                        {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
+                        {new Date(selectedDeal.completedAt).toLocaleTimeString()}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                {selectedDeal.notes ? (
+                  <p className="text-xs">{selectedDeal.notes}</p>
+                ) : (
+                  <p className="text-xs text-gray-500">No notes available</p>
+                )}
+                
+                {selectedDeal.messages && selectedDeal.messages.length > 0 && (
+                  <div className="mt-3">
+                    <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
+                    <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
+                      {selectedDeal.messages.map((message: any, index: number) => (
+                        <div key={index} className="text-xs p-2 bg-white rounded border">
+                          <div className="flex justify-between">
+                            <span className="font-medium">{message.sender}</span>
+                            <span className="text-gray-500">
+                              {new Date(message.timestamp).toLocaleDateString()}
+                            </span>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-  <div>
-    <p className="font-medium">
-      {deal.buyer && deal.buyer.fullName ? deal.buyer.fullName : "N/A"}
-    </p>
-    <p className="text-gray-500">
-      {deal.buyer && deal.buyer.email ? deal.buyer.email : "N/A"}
-    </p>
-  </div>
-</TableCell>
-                        <TableCell className="text-xs sm:text-sm font-medium">
-                          ETB {(deal.originalPrice || 0).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`${getStatusColor(deal.status)} text-xs flex items-center space-x-1`}>
-                            {getStatusIcon(deal.status)}
-                            <span>{deal.status}</span>
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          {new Date(deal.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs bg-transparent"
-                              onClick={() => handleViewDeal(deal)}
-                            >
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                            {deal.status === "pending" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  className="text-xs bg-green-600 hover:bg-green-700"
-                                  onClick={() => handleAcceptDeal(deal.id)}
-                                >
-                                  Accept
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="text-xs"
-                                  onClick={() => handleRejectDeal(deal.id)}
-                                >
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                            {deal.status === "approved" && (
-                              <Button
-                                size="sm"
-                                className="text-xs bg-blue-600 hover:bg-blue-700"
-                                onClick={() => handleCompleteDeal(deal.id)}
-                              >
-                                Complete
-                              </Button>
-                            )}
-                            {(deal.status === "pending" || deal.status === "approved") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs text-red-600 hover:text-red-700 bg-transparent"
-                                onClick={() => handleCancelDeal(deal.id, "Cancelled by admin")}
-                              >
-                                Cancel
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                          <p className="mt-1">{message.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
+        <Button
+          variant="outline"
+          className="text-xs sm:text-sm bg-transparent"
+          onClick={() => setIsDealDetailOpen(false)}
+        >
+          Close
+        </Button>
+        {selectedDeal?.status === "pending" && (
+          <>
+            <Button
+              className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
+              onClick={() => handleAcceptDeal(selectedDeal.id)}
+            >
+              Accept Deal
+            </Button>
+            <Button
+              variant="destructive"
+              className="text-xs sm:text-sm"
+              onClick={() => handleRejectDeal(selectedDeal.id)}
+            >
+              Reject Deal
+            </Button>
+          </>
+        )}
+        {selectedDeal?.status === "approved" && (
+          <Button
+            className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+            onClick={() => handleCompleteDeal(selectedDeal.id)}
+          >
+            Mark as Completed
+          </Button>
+        )}
+      </div>
+    </DialogContent>
+  </Dialog>
+</TabsContent>
         </Tabs>
       </div>
     </div>
