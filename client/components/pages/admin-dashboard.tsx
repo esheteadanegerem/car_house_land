@@ -2143,7 +2143,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Property Type *</Label>
                                   <Select
                                     value={editingItem?.propertyType || ""}
-                                    onChange={(value) => setEditingItem({ ...editingItem, propertyType: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, propertyType: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue placeholder="Select property type" />
