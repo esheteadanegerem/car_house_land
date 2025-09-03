@@ -70,7 +70,7 @@ export function Navigation() {
             className="text-lg sm:text-xl md:text-2xl font-serif font-bold gradient-text-brand hover:scale-105 transition-all duration-300 flex-shrink-0"
           >
             <span className="hidden sm:inline">MAS Gebeya PLC</span>
-            <span className="sm:hidden">MassGebeya</span>
+            <span className="sm:hidden">MAS Gebeya</span>
           </Link>
 
           {/* Desktop Navigation */}
