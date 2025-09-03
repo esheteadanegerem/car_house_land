@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useState } from "react"
+
 import { useApp } from "@/context/app-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -69,6 +69,8 @@ import { Label } from "@/components/ui/label"
 import { createCar } from "@/lib/api/cars"
 import { authService } from "@/lib/auth"
 
+import { useState, useEffect } from "react"
+
 export function AdminDashboard() {
   const {
     user,
@@ -106,6 +108,7 @@ export function AdminDashboard() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
 
+
   // const [carsData, setCarsData] = React.useState(CARS_DATA)
   // const [housesData, setHousesData] = React.useState(HOUSES_DATA)
   // const [landsData, setHousesData] = React.useState(LANDS_DATA)
@@ -121,6 +124,7 @@ export function AdminDashboard() {
 
   const [owners, setOwners] = useState([])
   const [isLoadingOwners, setIsLoadingOwners] = useState(false)
+
 
   const fetchOwners = async () => {
     setIsLoadingOwners(true)
