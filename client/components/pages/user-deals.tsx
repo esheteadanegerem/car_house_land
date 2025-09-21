@@ -206,13 +206,18 @@ export function UserDeals() {
                   {deal.dealId && <p className="text-xs text-gray-500 font-mono">ID: {deal.dealId}</p>}
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="aspect-video relative overflow-hidden rounded-lg">
-                    <img
-                      src={deal.item.images[0] || "/placeholder.svg"}
-                      alt={deal.item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                 <div className="aspect-video relative overflow-hidden rounded-lg">
+  <img
+    src={Array.isArray(deal.item.images) && deal.item.images.length > 0 
+      ? (typeof deal.item.images[0] === 'string' 
+        ? deal.item.images[0] 
+        : deal.item.images[0]?.url || "/placeholder.svg")
+      : "/placeholder.svg"}
+    alt={deal.item.title}
+    className="w-full h-full object-cover"
+    onError={(e) => { e.target.src = "/placeholder.svg"; }}
+  />
+</div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
