@@ -167,7 +167,7 @@ export function Home() {
                       size="lg"
                       variant="outline"
                       onClick={() => setIsAuthModalOpen(true)}
-                      className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-emerald-600 transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
+                      className="w-full sm:w-auto text-white hover:bg-white  bg-blue-400 hover:text-emerald-600 transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                     >
                       ግባ
                     </Button>
@@ -206,10 +206,10 @@ export function Home() {
                     playsInline
                     preload="metadata"
                     onError={(e) => {
-                      console.log("[v0] Video loading error:", e)
+                      console.log(" Video loading error:", e)
                     }}
                     onLoadedData={() => {
-                      console.log("[v0] Video loaded successfully")
+                      console.log(" Video loaded successfully")
                     }}
                   />
                 ))}
