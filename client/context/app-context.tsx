@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth"
 import type { User } from "@/lib/auth"
 import { fetchDeals, createDeal as apiCreateDeal, updateDealStatus as apiUpdateDealStatus } from "@/lib/api/deals"
 import { mapApiDealToLocal } from "@/lib/utils/mappers"
+import { authService } from "@/lib/auth" // FIXED: Add this import
 
 interface AppState {
   cart: Array<{
@@ -959,37 +960,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }
   // NEW: Consultation methods
-  const fetchConsultations = async () => {
-    if (!auth.user?.token) return;
+ const fetchConsultations = async () => {
+    const token = authService.getStoredToken(); // FIXED: Direct from storage
+    console.log('fetchConsultations token:', token ? 'Present' : 'Missing'); // Debug (remove later)
+
+    if (!token) {
+      console.log('No token for fetchConsultations'); // Debug
+      return; // Graceful fail - use localStorage fallback below
+    }
 
     try {
       const response = await fetch("https://car-house-land.onrender.com/api/consultations", {
         headers: {
-          Authorization: `Bearer ${auth.user.token}`,
+          Authorization: `Bearer ${token}`, // FIXED: Use stored token
           "Content-Type": "application/json",
         },
       });
+
+      console.log('fetchConsultations response status:', response.status); // Debug
 
       if (response.ok) {
         const data = await response.json();
         if (data.success && Array.isArray(data.data)) {
           dispatch({ type: "SET_CONSULTATIONS", payload: data.data });
-          // Fallback to localStorage
           localStorage.setItem("consultations", JSON.stringify(data.data));
         }
       } else {
         console.error("Failed to fetch consultations:", response.status);
-        // Fallback to localStorage
-        const savedConsultations = localStorage.getItem("consultations");
-        if (savedConsultations) {
-          try {
-            const parsed = JSON.parse(savedConsultations);
-            if (Array.isArray(parsed)) {
-              dispatch({ type: "SET_CONSULTATIONS", payload: parsed });
-            }
-          } catch (error) {
-            console.error("Error parsing saved consultations:", error);
+      }
+      // Always fallback to localStorage
+      const savedConsultations = localStorage.getItem("consultations");
+      if (savedConsultations) {
+        try {
+          const parsed = JSON.parse(savedConsultations);
+          if (Array.isArray(parsed)) {
+            dispatch({ type: "SET_CONSULTATIONS", payload: parsed });
           }
+        } catch (error) {
+          console.error("Error parsing saved consultations:", error);
         }
       }
     } catch (error) {
@@ -998,32 +1006,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<Consultation> => {
-    if (!auth.user?.token) {
-      throw new Error("No authentication token found");
+const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<Consultation> => {
+    const token = authService.getStoredToken(); // FIXED: Direct from storage
+    console.log('createConsultation token:', token ? 'Present' : 'Missing'); // Debug
+
+    if (!token) {
+      console.error('No token in createConsultation'); // FIXED: Better log
+      throw new Error("No authentication token found - please log in again");
     }
 
     try {
+      console.log('Sending payload:', data); // Debug
       const response = await fetch("https://car-house-land.onrender.com/api/consultations", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${auth.user.token}`,
+          Authorization: `Bearer ${token}`, // FIXED: Use stored token
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
 
+      console.log('createConsultation response status:', response.status); // Debug
+
       if (response.ok) {
         const newConsult = await response.json();
+        console.log('Raw response:', newConsult); // Debug
         if (newConsult.success && newConsult.data) {
           dispatch({ type: "ADD_CONSULTATION", payload: newConsult.data });
-          // Save to localStorage
           const updated = [...state.consultations, newConsult.data];
           localStorage.setItem("consultations", JSON.stringify(updated));
           return newConsult.data;
+        } else {
+          throw new Error(newConsult.message || 'Invalid response from server');
         }
+      } else {
+        const errorText = await response.text();
+        console.error('Error response body:', errorText); // Debug
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
       }
-      throw new Error("Failed to create consultation");
     } catch (error) {
       console.error("Error creating consultation:", error);
       // Fallback: Create locally
@@ -1041,7 +1061,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateConsultationStatus = async (id: string, status: Consultation['status'], notes?: string): Promise<void> => {
-    if (!auth.user?.token) {
+    const token = authService.getStoredToken(); // FIXED: Direct from storage
+    console.log('updateConsultationStatus token:', token ? 'Present' : 'Missing'); // Debug
+
+    if (!token) {
+      console.error('No token in updateConsultationStatus'); // FIXED
       throw new Error("No authentication token found");
     }
 
@@ -1049,11 +1073,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`https://car-house-land.onrender.com/api/consultations/${id}`, {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${auth.user.token}`,
+          Authorization: `Bearer ${token}`, // FIXED: Use stored token
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ status, agentNotes: notes }),
       });
+
+      console.log('updateConsultationStatus response status:', response.status); // Debug
 
       if (response.ok) {
         const updated = await response.json();
@@ -1062,7 +1088,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             type: "UPDATE_CONSULTATION",
             payload: { id, updates: updated.data },
           });
-          // Update localStorage
           const updatedConsultations = state.consultations.map(c => c.id === id ? updated.data : c);
           localStorage.setItem("consultations", JSON.stringify(updatedConsultations));
         }

@@ -12,7 +12,6 @@ const MachineRoutes=require("./routes/machineRoute")
 const UserRoutes = require("./routes/userRoute");
 const DealRoutes = require("./routes/dealRoute");
 const PropertyRoute=require("./routes/propertyRoute");
-const ConsultRoute=require("./routes/consultationRoute")
 const app = express();
 app.set("trust proxy", 1);
 
@@ -35,8 +34,6 @@ app.use('/api/machines', MachineRoutes);
 app.use('/api/users', UserRoutes);
 app.use('/api/deals', DealRoutes);
 app.use('/api/properties', PropertyRoute);
-app.use('/api/consultations', ConsultRoute);
-
 
 // Refresh token route
 app.post('/api/auth/refresh-token', async (req, res) => {

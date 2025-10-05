@@ -13,6 +13,7 @@ import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { Headphones, Calendar, Video, Phone, Map } from "lucide-react"
 import type { Consultation } from "@/types"
+import { authService } from "@/lib/auth" // For token utils
 
 export default function ConsultPage() {
   const { user, createConsultation } = useApp()
@@ -27,19 +28,23 @@ export default function ConsultPage() {
   const [bookingData, setBookingData] = useState({
     type: "" as Consultation["type"],
     mode: "" as Consultation["mode"],
-    dateTime: new Date(),
+    dateTime: new Date(Date.now() + 86400000), // Default to tomorrow
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState<string | null>(null)
 
-  // Mock available slots (replace with API)
+  // Mock available slots
   const availableSlots = [
     { date: new Date("2025-10-10"), times: ["10:00 AM", "2:00 PM", "4:00 PM"] },
     { date: new Date("2025-10-11"), times: ["9:00 AM", "11:00 AM", "3:00 PM"] },
   ]
 
-  const handleSubmitRequest = async () => {
+  const handleSubmitRequest = () => {
+    console.log('=== REQUEST FORM SUBMIT ==='); // Debug
+    console.log('Current user from context:', user); // NEW: Log user object
+
     if (!formData.fullName || !formData.email || !formData.phone || !formData.category || !formData.description) {
+      console.log('Missing form fields'); // Debug
       alert("Please fill all fields.")
       return
     }
@@ -47,9 +52,31 @@ export default function ConsultPage() {
   }
 
   const handleBookConsultation = async () => {
+    console.log('=== BOOKING SUBMIT ==='); // Debug
+    console.log('User object:', user); // NEW: Full user log
+    console.log('Form data:', formData); // NEW
+    console.log('Booking data:', bookingData); // NEW
+
     if (!bookingData.type || !bookingData.mode || !bookingData.dateTime) {
+      console.log('Missing booking fields'); // Debug
       alert("Please select all booking options.")
       return
+    }
+
+    if (bookingData.dateTime <= new Date()) {
+      alert("Date must be in the future.")
+      return
+    }
+
+    // FIXED: Direct token retrieval (bypasses context if needed)
+    const token = authService.getStoredToken() || localStorage.getItem('accessToken');
+    console.log('Retrieved token:', token ? `Present (starts with: ${token.substring(0, 10)}...)` : 'MISSING'); // NEW: Log token status
+
+    if (!token) {
+      console.log('No token found - cannot proceed'); // Debug
+      alert("Session expired. Please log in again.");
+      // TODO: Trigger login modal or redirect to /login
+      return;
     }
 
     setIsSubmitting(true)
@@ -60,11 +87,18 @@ export default function ConsultPage() {
         mode: bookingData.mode,
         dateTime: bookingData.dateTime.toISOString(),
       }
-      const newConsult = await createConsultation(consultationData)
+      console.log('Payload to send:', consultationData); // NEW: Exact payload
+
+      // FIXED: Pass token explicitly to context (if your createConsultation accepts it as param)
+      // If not, update context to use this token internally (see Step 2)
+      const newConsult = await createConsultation(consultationData, token); // UPDATED: Pass token
+      console.log('Consultation created:', newConsult); // NEW
+
       setConfirmation(`Booking confirmed! ID: ${newConsult.id}. You'll receive an email/SMS shortly.`)
       setStep(3)
     } catch (error) {
-      alert("Booking failed. Please try again.")
+      console.error('Booking error:', error); // NEW: Full error
+      alert(`Booking failed: ${error.message || 'Check console for details'}`);
     } finally {
       setIsSubmitting(false)
     }
@@ -109,7 +143,6 @@ export default function ConsultPage() {
           <CardContent className="space-y-6">
             {step === 1 && (
               <div className="space-y-4">
-                {/* ... (form fields unchanged as per previous response) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="fullName">Full Name *</Label>
@@ -176,7 +209,6 @@ export default function ConsultPage() {
 
             {step === 2 && (
               <div className="space-y-4">
-                {/* ... (booking fields unchanged as per previous response) */}
                 <div>
                   <Label htmlFor="type">Consultation Type *</Label>
                   <Select value={bookingData.type} onValueChange={(v) => setBookingData({ ...bookingData, type: v as any })}>
@@ -223,6 +255,7 @@ export default function ConsultPage() {
                         inline
                         filterDate={(date) => availableSlots.some(slot => slot.date.toDateString() === date.toDateString())}
                         className="w-full"
+                        minDate={new Date()} // Prevent past dates
                       />
                     </DialogContent>
                   </Dialog>

@@ -56,12 +56,12 @@ export function useAuth() {
           // Don't clear auth on background verification failure
         }
       } else {
-        console.log("[v0] No valid stored auth, clearing state")
+        console.log(" No valid stored auth, clearing state")
         setUser(null)
         setIsAuthenticated(false)
       }
     } catch (error) {
-      console.error("[v0] Auth check error:", error)
+      console.error(" Auth check error:", error)
       setUser(null)
       setIsAuthenticated(false)
     } finally {
@@ -72,7 +72,7 @@ export function useAuth() {
 
   const login = async (data: LoginData): Promise<AuthResponse> => {
     try {
-      console.log("[v0] Attempting login...")
+      console.log(" Attempting login...")
       setLoading(true)
       const response = await authService.login(data)
 
