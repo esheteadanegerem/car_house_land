@@ -268,7 +268,7 @@ export function Navigation() {
                   </>
                 ) : (
                   <Button
-                    className="w-full hover:scale-105 transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-sm py-2.5 mt-2"
+                    className="w-full hover:scale-105 transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-blue-500 font-medium text-sm py-2.5 mt-2"
                     onClick={() => {
                       setIsAuthModalOpen(true)
                       setIsMobileMenuOpen(false)
