@@ -4,7 +4,7 @@ import { useEffect, Suspense } from "react"
 import type React from "react"
 import { createContext, useContext, useReducer, type ReactNode } from "react"
 import { useSearchParams } from "next/navigation"
-import type { Car, House, Land, Machine, Deal } from "@/types"
+import type { Car, House, Land, Machine, Deal,Consultation } from "@/types"
 import { fetchCars, deleteCar as apiDeleteCar } from "@/lib/api/cars"
 import { fetchProperties, deleteHouse as apiDeleteHouse } from "@/lib/api/properties"
 import { fetchLands, deleteLand as apiDeleteLand } from "@/lib/api/lands"
@@ -28,6 +28,7 @@ interface AppState {
     item: Car | House | Land | Machine
   }>
   deals: Deal[]
+  consultations: Consultation[] // NEW: Add consultations
   soldItems: Set<string>
   isAuthModalOpen: boolean
   cars: Car[]
@@ -53,6 +54,12 @@ type AppAction =
   | { type: "SET_DEALS"; payload: Deal[] }
   | { type: "ADD_DEAL"; payload: Deal }
   | { type: "UPDATE_DEAL"; payload: { id: string; updates: Partial<Deal> } }
+  | {
+      type: "SET_CONSULTATIONS"; payload: Consultation[] // NEW
+    }
+  | { type: "ADD_CONSULTATION"; payload: Consultation } // NEW
+  | { type: "UPDATE_CONSULTATION"; payload: { id: string; updates: Partial<Consultation> } } // NEW
+   
   | {
       type: "SET_CART"
       payload: Array<{
@@ -130,6 +137,13 @@ interface AppContextType extends AppState {
   refreshLands: () => Promise<void>
   refreshMachines: () => Promise<void>
   refreshDeals: () => Promise<void>
+  // NEW: Consultation methods
+  createConsultation: (data: Omit<Consultation, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => Promise<Consultation>
+  updateConsultationStatus: (id: string, status: Consultation['status'], notes?: string) => Promise<void>
+  fetchConsultations: () => Promise<void>
+  refreshConsultations: () => Promise<void>
+  getPendingConsultationsCount: () => number
+
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -182,6 +196,18 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         deals: (state.deals || []).map((deal) =>
           deal.id === action.payload.id ? { ...deal, ...action.payload.updates } : deal,
+        ),
+      }
+    // NEW: Consultation reducer cases
+    case "SET_CONSULTATIONS":
+      return { ...state, consultations: action.payload || [] }
+    case "ADD_CONSULTATION":
+      return { ...state, consultations: [...(state.consultations || []), action.payload] }
+    case "UPDATE_CONSULTATION":
+      return {
+        ...state,
+        consultations: (state.consultations || []).map((consult) =>
+          consult.id === action.payload.id ? { ...consult, ...action.payload.updates } : consult,
         ),
       }
     case "SET_CARS":
@@ -265,6 +291,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     cart: [],
     favorites: [],
     deals: [],
+    consultations: [], // NEW: Initialize consultations
     soldItems: new Set(),
     isAuthModalOpen: false,
     cars: [],
@@ -931,6 +958,131 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "DELETE_LAND", payload: id })
     }
   }
+  // NEW: Consultation methods
+  const fetchConsultations = async () => {
+    if (!auth.user?.token) return;
+
+    try {
+      const response = await fetch("https://car-house-land.onrender.com/api/consultations", {
+        headers: {
+          Authorization: `Bearer ${auth.user.token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data)) {
+          dispatch({ type: "SET_CONSULTATIONS", payload: data.data });
+          // Fallback to localStorage
+          localStorage.setItem("consultations", JSON.stringify(data.data));
+        }
+      } else {
+        console.error("Failed to fetch consultations:", response.status);
+        // Fallback to localStorage
+        const savedConsultations = localStorage.getItem("consultations");
+        if (savedConsultations) {
+          try {
+            const parsed = JSON.parse(savedConsultations);
+            if (Array.isArray(parsed)) {
+              dispatch({ type: "SET_CONSULTATIONS", payload: parsed });
+            }
+          } catch (error) {
+            console.error("Error parsing saved consultations:", error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error loading consultations from API:", error);
+      // Fallback to localStorage (as above)
+    }
+  };
+
+  const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<Consultation> => {
+    if (!auth.user?.token) {
+      throw new Error("No authentication token found");
+    }
+
+    try {
+      const response = await fetch("https://car-house-land.onrender.com/api/consultations", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${auth.user.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        const newConsult = await response.json();
+        if (newConsult.success && newConsult.data) {
+          dispatch({ type: "ADD_CONSULTATION", payload: newConsult.data });
+          // Save to localStorage
+          const updated = [...state.consultations, newConsult.data];
+          localStorage.setItem("consultations", JSON.stringify(updated));
+          return newConsult.data;
+        }
+      }
+      throw new Error("Failed to create consultation");
+    } catch (error) {
+      console.error("Error creating consultation:", error);
+      // Fallback: Create locally
+      const newConsult: Consultation = {
+        id: `consult-${Date.now()}`,
+        ...data,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      dispatch({ type: "ADD_CONSULTATION", payload: newConsult });
+      localStorage.setItem("consultations", JSON.stringify([...state.consultations, newConsult]));
+      return newConsult;
+    }
+  };
+
+  const updateConsultationStatus = async (id: string, status: Consultation['status'], notes?: string): Promise<void> => {
+    if (!auth.user?.token) {
+      throw new Error("No authentication token found");
+    }
+
+    try {
+      const response = await fetch(`https://car-house-land.onrender.com/api/consultations/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${auth.user.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status, agentNotes: notes }),
+      });
+
+      if (response.ok) {
+        const updated = await response.json();
+        if (updated.success && updated.data) {
+          dispatch({
+            type: "UPDATE_CONSULTATION",
+            payload: { id, updates: updated.data },
+          });
+          // Update localStorage
+          const updatedConsultations = state.consultations.map(c => c.id === id ? updated.data : c);
+          localStorage.setItem("consultations", JSON.stringify(updatedConsultations));
+        }
+      }
+    } catch (error) {
+      console.error("Error updating consultation status:", error);
+      // Fallback: Update locally
+      dispatch({
+        type: "UPDATE_CONSULTATION",
+        payload: {
+          id,
+          updates: { status, agentNotes: notes, updatedAt: new Date().toISOString() },
+        },
+      });
+    }
+  };
+
+  const refreshConsultations = async () => {
+    await fetchConsultations();
+  };
 
   useEffect(() => {
     try {
@@ -998,6 +1150,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("userFavorites", JSON.stringify(state.favorites))
     }
   }, [state.favorites])
+  useEffect(() => {
+    try {
+      // ... (existing localStorage loads unchanged)
+
+      // NEW: Load consultations from localStorage as fallback
+      const savedConsultations = localStorage.getItem("consultations");
+      if (savedConsultations) {
+        try {
+          const parsed = JSON.parse(savedConsultations);
+          if (Array.isArray(parsed)) {
+            dispatch({ type: "SET_CONSULTATIONS", payload: parsed });
+          }
+        } catch (error) {
+          console.error("Error parsing saved consultations:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading data from localStorage:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (state.consultations) {
+      localStorage.setItem("consultations", JSON.stringify(state.consultations));
+    }
+  }, [state.consultations]);
+
 
   const value: AppContextType = {
     ...state,
@@ -1035,6 +1214,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addLand,
     updateLand,
     deleteLand,
+    // NEW: Expose consultation methods
+    createConsultation,
+    updateConsultationStatus,
+    fetchConsultations,
+    refreshConsultations,
+    getPendingConsultationsCount: () => state.consultations.filter((c) => c.status === "pending").length,
+  
   }
 
   return (

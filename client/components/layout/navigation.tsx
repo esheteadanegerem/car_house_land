@@ -27,6 +27,7 @@ export function Navigation() {
     { href: "/houses", label: "Properties" },
     { href: "/lands", label: "Lands" },
     { href: "/machines", label: "Machines" },
+    { href: "/consult", label: "Consult"},
   ]
 
   const adminNavItems = [
@@ -44,13 +45,13 @@ export function Navigation() {
   const cartItemCount = Array.isArray(cart) ? cart.length : 0
 
   const handleLogout = async () => {
-    console.log("[v0] Navigation logout triggered")
+    console.log(" Navigation logout triggered")
     setIsLoggingOut(true)
     try {
       await logout()
       await new Promise((resolve) => setTimeout(resolve, 1000))
     } catch (error) {
-      console.error("[v0] Logout error:", error)
+      console.error("Logout error:", error)
     } finally {
       setIsLoggingOut(false)
     }
@@ -69,8 +70,8 @@ export function Navigation() {
             href={user?.role === "admin" ? "/dashboard/admin" : "/"}
             className="text-lg sm:text-xl md:text-2xl font-serif font-bold gradient-text-brand hover:scale-105 transition-all duration-300 flex-shrink-0"
           >
-            <span className="hidden sm:inline">MasGebeya PLC</span>
-            <span className="sm:hidden">MassGebeya</span>
+            <span className="hidden sm:inline">MAS Gebeya PLC</span>
+            <span className="sm:hidden">MAS Gebeya</span>
           </Link>
 
           {/* Desktop Navigation */}
