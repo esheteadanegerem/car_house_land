@@ -11,8 +11,8 @@ const LandRoutes=require("./routes/landRoute");
 const MachineRoutes=require("./routes/machineRoute")
 const UserRoutes = require("./routes/userRoute");
 const DealRoutes = require("./routes/dealRoute");
-const PropertyRoute=require("./routes/propertyRoute");
-const ConsultRoute=require("./routes/consultationRoute");
+const PropertyRoute = require("./routes/propertyRoute");
+const ConsultationRoutes = require("./routes/consultationRoute");
 const app = express();
 app.set("trust proxy", 1);
 
@@ -35,11 +35,12 @@ app.use('/api/machines', MachineRoutes);
 app.use('/api/users', UserRoutes);
 app.use('/api/deals', DealRoutes);
 app.use('/api/properties', PropertyRoute);
-app.use('/api/consultations', ConsultRoute);
+app.use('/api/consultations', ConsultationRoutes);
+
 // Refresh token route
 app.post('/api/auth/refresh-token', async (req, res) => {
   try {
-    const refreshToken = req.body.refreshToken || req.cookies.refreshToken;
+    const refreshToken = req.body.refreshToken  req.cookies.refreshToken;
     if (!refreshToken) {
       return res.status(401).json({ status: 'error', message: 'No refresh token provided' });
     }
@@ -47,7 +48,7 @@ app.post('/api/auth/refresh-token', async (req, res) => {
     const decoded = verifyRefreshToken(refreshToken);
     const user = await User.findById(decoded.id).select('-password');
 
-    if (!user || !user.isActive) {
+    if (!user  !user.isActive) {
       return res.status(401).json({ status: 'error', message: 'Invalid refresh token' });
     }
 
@@ -76,7 +77,7 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, () => console.log(Server running on port ${PORT}));
   } catch (err) {
     console.error('Failed to start server:', err);
   }
