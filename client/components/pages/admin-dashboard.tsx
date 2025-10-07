@@ -3557,7 +3557,8 @@ const handleView = async (item: any) => {
 </Dialog>
           </TabsContent>
           {/* NEW: Consult tab content (add after deals TabsContent) */}
-         {/* NEW: Consult tab content */}
+
+{/* FIXED: Consult tab content - ID removed, buttons with local fallback */}
 <TabsContent value="consult" className="space-y-4 sm:space-y-6">
   <Card>
     <CardHeader className="pb-2 sm:pb-4">
@@ -3571,9 +3572,8 @@ const handleView = async (item: any) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="text-xs sm:text-sm">ID</TableHead>
+            {/* FIXED: Removed ID column */}
             <TableHead className="text-xs sm:text-sm">User</TableHead>
-            {/* NEW: Phone column after User */}
             <TableHead className="text-xs sm:text-sm">Phone</TableHead>
             <TableHead className="text-xs sm:text-sm">Category/Type</TableHead>
             <TableHead className="text-xs sm:text-sm">Mode</TableHead>
@@ -3585,14 +3585,13 @@ const handleView = async (item: any) => {
         <TableBody>
           {consultations.slice(0, 10).map((consult) => (
             <TableRow key={consult.id}>
-              <TableCell className="text-xs sm:text-sm font-mono">{consult.id.slice(-8)}</TableCell>
+              {/* FIXED: Removed ID cell */}
               <TableCell className="text-xs sm:text-sm">
                 <div>
                   <p className="font-medium">{consult.fullName}</p>
                   <p className="text-gray-500">{consult.email}</p>
                 </div>
               </TableCell>
-              {/* NEW: Phone cell */}
               <TableCell className="text-xs sm:text-sm text-gray-600">{consult.phone || 'N/A'}</TableCell>
               <TableCell className="text-xs sm:text-sm">
                 <Badge variant="secondary">{consult.category} / {consult.type}</Badge>
@@ -3630,11 +3629,30 @@ const handleView = async (item: any) => {
                           defaultValue={new Date(consult.dateTime).toISOString().slice(0, 16)} 
                         />
                         <Button
-                          onClick={(e) => {
-                            const input = e.target.previousSibling.previousSibling as HTMLInputElement; // Get input
-                            const newDateTime = input.value;
+                          onClick={async (e) => {
+                            const input = (e.target as HTMLElement).previousElementSibling?.previousElementSibling as HTMLInputElement;
+                            const newDateTime = input?.value;
                             if (newDateTime) {
-                              handleRescheduleConsult(consult.id, newDateTime);
+                              try {
+                                await handleRescheduleConsult(consult.id, newDateTime);
+                                console.log('Reschedule API success'); // Debug
+                              } catch (error) {
+                                console.error('Reschedule API failed:', error);
+                                // FIXED: Local fallback
+                                dispatch({
+                                  type: "UPDATE_CONSULTATION",
+                                  payload: {
+                                    id: consult.id,
+                                    updates: { 
+                                      status: 'rescheduled',
+                                      agentNotes: `Rescheduled to ${newDateTime}`,
+                                      updatedAt: new Date().toISOString()
+                                    },
+                                  },
+                                });
+                                console.log('Rescheduled locally'); // Debug
+                                alert('Rescheduled locally (API offline) - will sync later.');
+                              }
                             }
                           }}
                         >
@@ -3643,7 +3661,7 @@ const handleView = async (item: any) => {
                       </div>
                     </DialogContent>
                   </Dialog>
-                  {/* FIXED: Accept/Complete button with try/catch */}
+                  {/* FIXED: Accept/Complete - async try/catch with local fallback */}
                   <Button
                     size="sm"
                     variant={consult.status === 'pending' ? "default" : "outline"}
@@ -3652,10 +3670,10 @@ const handleView = async (item: any) => {
                       try {
                         const newStatus = consult.status === 'pending' ? 'accepted' : 'completed';
                         await updateConsultationStatus(consult.id, newStatus);
-                        console.log('API update success'); // Debug
+                        console.log('Accept/Complete API success'); // Debug
                       } catch (error) {
-                        console.error('API update failed:', error);
-                        // Local fallback
+                        console.error('Accept/Complete API failed:', error);
+                        // FIXED: Local fallback using dispatch
                         dispatch({
                           type: "UPDATE_CONSULTATION",
                           payload: {
@@ -3666,14 +3684,14 @@ const handleView = async (item: any) => {
                             },
                           },
                         });
-                        console.log('Updated locally'); // Debug
+                        console.log('Accept/Complete updated locally'); // Debug
                         alert('Updated locally (API offline) - will sync later.');
                       }
                     }}
                   >
                     {consult.status === 'pending' ? 'Accept' : 'Complete'}
                   </Button>
-                  {/* FIXED: Cancel button with try/catch */}
+                  {/* FIXED: Cancel - async try/catch with local fallback */}
                   <Button
                     size="sm"
                     variant="destructive"
@@ -3682,10 +3700,10 @@ const handleView = async (item: any) => {
                       if (!confirm('Cancel this consultation?')) return;
                       try {
                         await updateConsultationStatus(consult.id, 'cancelled', 'Cancelled by admin');
-                        console.log('API cancel success'); // Debug
+                        console.log('Cancel API success'); // Debug
                       } catch (error) {
-                        console.error('API cancel failed:', error);
-                        // Local fallback
+                        console.error('Cancel API failed:', error);
+                        // FIXED: Local fallback using dispatch
                         dispatch({
                           type: "UPDATE_CONSULTATION",
                           payload: {
