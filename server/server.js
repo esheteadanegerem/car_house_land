@@ -79,7 +79,7 @@ const startServer = async () => {
     await connectDB();
     app.listen(PORT, () => console.log(Server running on port ${PORT}));
   } catch (err) {
-    console.error('Failed to start server:', err);
+    console.error('Failed to star server:', err);
   }
 };
 
