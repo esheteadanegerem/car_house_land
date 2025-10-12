@@ -75,6 +75,7 @@ import { createCar } from "@/lib/api/cars"
 import { authService } from "@/lib/auth"
 
 import { useState, useEffect } from "react"
+import RecentActivities from "./RecentActivities"
 
 export function AdminDashboard() {
   const {
@@ -104,6 +105,7 @@ export function AdminDashboard() {
     fetchConsultations,
     updateConsultationStatus,
     getPendingConsultationsCount,
+    dispatch,
 
   } = useApp()
   const [activeTab, setActiveTab] = useState("overview")
@@ -1468,162 +1470,52 @@ const handleView = async (item: any) => {
             </div>
           </div>
 
-          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-              <Card className="lg:col-span-1">
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <PieChart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
-                    Listings Distribution
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Breakdown by category</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      cars: { label: "Cars", color: "var(--color-cars-primary)" },
-                      houses: { label: "Houses", color: "var(--color-houses-primary)" },
-                      lands: { label: "Lands", color: "var(--color-lands-primary)" },
-                      machines: { label: "Machines", color: "var(--color-machines-primary)" },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius="80%"
-                          dataKey="value"
-                          label={({ name, percentage }) => `${name}: ${percentage}%`}
-                        >
-                          {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+       <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <Card className="lg:col-span-3">
+      <CardHeader className="pb-2 sm:pb-4">
+        <CardTitle className="flex items-center text-sm sm:text-base">
+          <PieChart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
+          Listings Distribution
+        </CardTitle>
+        <CardDescription className="text-xs sm:text-sm">Breakdown by category</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer
+          config={{
+            cars: { label: "Cars", color: "var(--color-cars-primary)" },
+            houses: { label: "Houses", color: "var(--color-houses-primary)" },
+            lands: { label: "Lands", color: "var(--color-lands-primary)" },
+            machines: { label: "Machines", color: "var(--color-machines-primary)" },
+          }}
+          className="h-[200px] sm:h-[250px] md:h-[300px]"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsPieChart>
+              <Pie
+                data={categoryData}
+                cx="50%"
+                cy="50%"
+                outerRadius="80%"
+                dataKey="value"
+                label={({ name, percentage }) => `${name}: ${percentage}%`}
+              >
+                {categoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <ChartTooltip content={<ChartTooltipContent />} />
+            </RechartsPieChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  </div>
 
-              <Card className="lg:col-span-2">
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <Target className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
-                    Performance Metrics
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Key performance indicators</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                    {performanceData.map((metric, index) => (
-                      <div key={index} className="text-center">
-                        <ChartContainer
-                          config={{
-                            value: { label: metric.name, color: metric.color },
-                          }}
-                          className="h-[80px] sm:h-[100px] md:h-[120px]"
-                        >
-                          <ResponsiveContainer width="100%" height="100%">
-                            <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={[metric]}>
-                              <RadialBar dataKey="value" cornerRadius={10} fill={metric.color} />
-                            </RadialBarChart>
-                          </ResponsiveContainer>
-                        </ChartContainer>
-                        <div className="mt-2">
-                          <div className="text-xl sm:text-2xl font-bold" style={{ color: metric.color }}>
-                            {metric.value}%
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-600">{metric.name}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
-                    Recent Activity
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Latest platform updates</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 sm:space-y-4">
-                    {[
-                      { type: "user", message: "New user registration", time: "2 hours ago", color: "bg-blue-500" },
-                      { type: "listing", message: "Car listing approved", time: "4 hours ago", color: "bg-green-500" },
-                      {
-                        type: "deal",
-                        message: "Deal completed successfully",
-                        time: "6 hours ago",
-                        color: "bg-purple-500",
-                      },
-                      {
-                        type: "system",
-                        message: "System maintenance completed",
-                        time: "8 hours ago",
-                        color: "bg-orange-500",
-                      },
-                    ].map((activity, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${activity.color}`}></div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm font-medium truncate">{activity.message}</p>
-                          <p className="text-xs text-gray-500">{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <Star className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-amber-500" />
-                    Top Performing Items
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Most viewed and inquired items</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 sm:space-y-4">
-                    {topPerformingItems.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium text-xs sm:text-sm truncate">{item.name}</span>
-                            <Badge variant="secondary" className="text-xs flex-shrink-0">
-                              {item.category}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center space-x-2 sm:space-x-4 mt-1 text-xs text-gray-600">
-                            <span>{item.views} views</span>
-                            <span>{item.inquiries} inquiries</span>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-2">
-                          <div className="font-semibold text-brand-blue text-xs sm:text-sm">
-                            ETB {(item.revenue || 0).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+  <div className="grid grid-cols-1 gap-4 sm:gap-6">
+    <RecentActivities />
+  </div>
+</TabsContent>
 
           <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -3557,107 +3449,206 @@ const handleView = async (item: any) => {
 </Dialog>
           </TabsContent>
           {/* NEW: Consult tab content (add after deals TabsContent) */}
-          <TabsContent value="consult" className="space-y-4 sm:space-y-6">
-            <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="flex items-center text-sm sm:text-base">
-                  <Headphones className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-                  Consultation Management
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Review and manage booked consultations</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm">ID</TableHead>
-                      <TableHead className="text-xs sm:text-sm">User</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Category/Type</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Mode</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Date/Time</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {consultations.slice(0, 10).map((consult) => (
-                      <TableRow key={consult.id}>
-                        <TableCell className="text-xs sm:text-sm font-mono">{consult.id.slice(-8)}</TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          <div>
-                            <p className="font-medium">{consult.fullName}</p>
-                            <p className="text-gray-500">{consult.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          <Badge variant="secondary">{consult.category} / {consult.type}</Badge>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          <div className="flex items-center space-x-1">
-                            {getModeIcon(consult.mode)}
-                            <span>{consult.mode}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          {new Date(consult.dateTime).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`${getConsultStatusColor(consult.status)} text-xs`}>
-                            {consult.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button size="sm" variant="outline" className="text-xs">
-                                  Reschedule
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Reschedule {consult.fullName}'s Consultation</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-2">
-                                  <Label>New Date & Time</Label>
-                                  <Input type="datetime-local" defaultValue={new Date(consult.dateTime).toISOString().slice(0, 16)} />
-                                  <Button
-                                    onClick={(e) => {
-                                      const newDateTime = (e.target as any).previousSibling.value;
-                                      if (newDateTime) handleRescheduleConsult(consult.id, newDateTime);
-                                      setIsDealDetailOpen(false); // Reuse existing close logic if needed
-                                    }}
-                                  >
-                                    Confirm Reschedule
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                            <Button
-                              size="sm"
-                              variant={consult.status === 'pending' ? "default" : "outline"}
-                              className="text-xs"
-                              onClick={() => consult.status === 'pending' ? handleAcceptConsult(consult.id) : handleCompleteConsult(consult.id)}
-                            >
-                              {consult.status === 'pending' ? 'Accept' : 'Complete'}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="text-xs"
-                              onClick={() => handleCancelConsult(consult.id)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
+{/* FIXED: Consult tab content - ID removed, buttons with local fallback */}
+{/* NEW: Consult tab content */}
+<TabsContent value="consult" className="space-y-4 sm:space-y-6">
+  <Card>
+    <CardHeader className="pb-2 sm:pb-4">
+      <CardTitle className="flex items-center text-sm sm:text-base">
+        <Headphones className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
+        Consultation Management
+      </CardTitle>
+      <CardDescription className="text-xs sm:text-sm">Review and manage booked consultations</CardDescription>
+    </CardHeader>
+    <CardContent className="p-0">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-xs sm:text-sm">User</TableHead>
+            <TableHead className="text-xs sm:text-sm">Phone</TableHead>
+            <TableHead className="text-xs sm:text-sm">Category/Type</TableHead>
+            <TableHead className="text-xs sm:text-sm">Mode</TableHead>
+            <TableHead className="text-xs sm:text-sm">Date/Time</TableHead>
+            <TableHead className="text-xs sm:text-sm">Status</TableHead>
+            <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {consultations.slice(0, 10).map((consult) => (
+            <TableRow key={consult.id}>
+              <TableCell className="text-xs sm:text-sm">
+                <div>
+                  <p className="font-medium">{consult.fullName}</p>
+                  <p className="text-gray-500">{consult.email}</p>
+                </div>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm text-gray-600">{consult.phone || 'N/A'}</TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                <Badge variant="secondary">{consult.category} / {consult.type}</Badge>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                <div className="flex items-center space-x-1">
+                  {getModeIcon(consult.mode)}
+                  <span>{consult.mode}</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                {new Date(consult.dateTime).toLocaleString()}
+              </TableCell>
+              <TableCell>
+                <Badge className={`${getConsultStatusColor(consult.status)} text-xs`}>
+                  {consult.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex space-x-1">
+                  {/* Reschedule Dialog with local state */}
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline" className="text-xs" disabled={consult.status === 'cancelled' || consult.status === 'completed'}>
+                        Reschedule
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Reschedule {consult.fullName}'s Consultation</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-2">
+                        <Label>New Date & Time</Label>
+                        {/* NEW: Use local state for input */}
+                        <Input 
+                          id="new-datetime"
+                          type="datetime-local" 
+                          defaultValue={new Date(consult.dateTime).toISOString().slice(0, 16)} 
+                        />
+                        <Button
+                          onClick={async () => {
+                            const newDateTime = (document.getElementById('new-datetime') as HTMLInputElement)?.value;
+                            if (!newDateTime) {
+                              alert('Please select a new date/time.');
+                              return;
+                            }
+                            // Optimistic update FIRST (instant UI)
+                            dispatch({
+                              type: "UPDATE_CONSULTATION",
+                              payload: {
+                                id: consult.id,
+                                updates: {
+                                  status: 'rescheduled',
+                                  dateTime: new Date(newDateTime).toISOString(),
+                                  agentNotes: `Rescheduled by admin to ${new Date(newDateTime).toLocaleString()}`,
+                                  updatedAt: new Date().toISOString(),
+                                },
+                              },
+                            });
+                            
+                            try {
+                              await updateConsultationStatus(consult.id, 'rescheduled', `Rescheduled to ${new Date(newDateTime).toLocaleString()}`);
+                              console.log('Reschedule API success');  // Debug
+                              await fetchConsultations();  // Sync with server
+                            } catch (error) {
+                              console.error('Reschedule API failed:', error);
+                              // No refresh—local update already done
+                              if (error.message?.includes('404')) {
+                                alert('Rescheduled locally (backend not ready yet). Data saved offline.');
+                              } else {
+                                alert('Rescheduled locally due to network error. Data saved offline.');
+                              }
+                            }
+                          }}
+                        >
+                          Confirm Reschedule
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  {/* Accept/Complete Button */}
+                  <Button
+                    size="sm"
+                    variant={consult.status === 'pending' ? "default" : "outline"}
+                    className="text-xs"
+                    disabled={consult.status === 'cancelled'}
+                    onClick={async () => {
+                      const newStatus = consult.status === 'pending' ? 'accepted' : 'completed';
+                      // Optimistic update FIRST
+                      dispatch({
+                        type: "UPDATE_CONSULTATION",
+                        payload: {
+                          id: consult.id,
+                          updates: { 
+                            status: newStatus,
+                            ...(newStatus === 'completed' && { completedAt: new Date().toISOString() }),
+                            updatedAt: new Date().toISOString(),
+                          },
+                        },
+                      });
+                      
+                      try {
+                        await updateConsultationStatus(consult.id, newStatus);
+                        console.log('Accept/Complete API success');  // Debug
+                        await fetchConsultations();  // Sync
+                      } catch (error) {
+                        console.error('Accept/Complete API failed:', error);
+                        if (error.message?.includes('404')) {
+                          alert('Updated locally (backend not ready). Data saved offline.');
+                        } else {
+                          alert('Updated locally due to network error. Data saved offline.');
+                        }
+                      }
+                    }}
+                  >
+                    {consult.status === 'pending' ? 'Accept' : 'Complete'}
+                  </Button>
+                  
+                  {/* Cancel Button */}
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="text-xs"
+                    disabled={consult.status === 'completed'}
+                    onClick={async () => {
+                      if (!confirm('Cancel this consultation? This cannot be undone.')) return;
+                      // Optimistic update FIRST
+                      dispatch({
+                        type: "UPDATE_CONSULTATION",
+                        payload: {
+                          id: consult.id,
+                          updates: { 
+                            status: 'cancelled',
+                            agentNotes: 'Cancelled by admin',
+                            cancelledAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                          },
+                        },
+                      });
+                      
+                      try {
+                        await updateConsultationStatus(consult.id, 'cancelled', 'Cancelled by admin');
+                        console.log('Cancel API success');  // Debug
+                        await fetchConsultations();  // Sync
+                      } catch (error) {
+                        console.error('Cancel API failed:', error);
+                        if (error.message?.includes('404')) {
+                          alert('Cancelled locally (backend not ready). Data saved offline.');
+                        } else {
+                          alert('Cancelled locally due to network error. Data saved offline.');
+                        }
+                      }
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </CardContent>
+  </Card>
+</TabsContent>
         </Tabs> 
         
       </div>
