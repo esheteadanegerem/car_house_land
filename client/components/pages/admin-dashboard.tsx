@@ -1832,7 +1832,7 @@ const handleCancelConsult = async (consult: Consultation) => {
           </TabsContent>
 
 
-v
+
           <TabsContent value="listings" className="space-y-4 sm:space-y-6">
             <Card>
               <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-4">
