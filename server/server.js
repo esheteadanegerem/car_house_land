@@ -39,7 +39,7 @@ app.use('/api/consultations', ConsultationRoutes);
 
 app.post('/api/auth/refresh-token', async (req, res) => {
   try {
-    const refreshToken = req.body.refreshToken  req.cookies.refreshToken;
+    const refreshToken = req.body.refreshToken || req.cookies.refreshToken;
     if (!refreshToken) {
       return res.status(401).json({ status: 'error', message: 'No refresh token provided' });
     }
@@ -47,7 +47,7 @@ app.post('/api/auth/refresh-token', async (req, res) => {
     const decoded = verifyRefreshToken(refreshToken);
     const user = await User.findById(decoded.id).select('-password');
 
-    if (!user  !user.isActive) {
+    if (!user || !user.isActive) {
       return res.status(401).json({ status: 'error', message: 'Invalid refresh token' });
     }
 
@@ -76,9 +76,9 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => console.log(Server running on port ${PORT}));
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (err) {
-    console.error('Failed to star server:', err);
+    console.error('Failed to start server:', err);
   }
 };
 
