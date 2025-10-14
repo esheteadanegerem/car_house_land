@@ -37,7 +37,6 @@ app.use('/api/deals', DealRoutes);
 app.use('/api/properties', PropertyRoute);
 app.use('/api/consultations', ConsultationRoutes);
 
-// Refresh token route
 app.post('/api/auth/refresh-token', async (req, res) => {
   try {
     const refreshToken = req.body.refreshToken  req.cookies.refreshToken;
@@ -58,7 +57,7 @@ app.post('/api/auth/refresh-token', async (req, res) => {
     res.status(401).json({ status: 'error', message: 'Refresh token invalid or expired' });
   }
 });
- 
+
 
 // 404 handler
 app.use((req, res) => {
