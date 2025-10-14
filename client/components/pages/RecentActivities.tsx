@@ -8,6 +8,11 @@ import { Activity, User, Package, DollarSign, Headphones, Car, Home, MapPin, Wre
 const RecentActivities = () => {
   const { activities, activitiesLoading, fetchRecentActivities } = useApp();
 
+
+
+
+  // this is done for recent activity
+
   const getActivityIcon = (entityType: string, action: string) => {
     const entityIcons = {
       user: <User className="w-4 h-4" />,
@@ -44,7 +49,7 @@ const RecentActivities = () => {
     const now = new Date();
     const activityTime = new Date(timestamp);
     const diffInMinutes = Math.floor((now.getTime() - activityTime.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -86,8 +91,8 @@ const RecentActivities = () => {
             <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
             Recent Activity
           </CardTitle>
-          <RefreshCw 
-            className="w-4 h-4 cursor-pointer text-gray-500 hover:text-gray-700 transition-colors" 
+          <RefreshCw
+            className="w-4 h-4 cursor-pointer text-gray-500 hover:text-gray-700 transition-colors"
             onClick={() => fetchRecentActivities()}
           />
         </div>
