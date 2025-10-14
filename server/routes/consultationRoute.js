@@ -9,7 +9,7 @@ const {
 
 // Assume you have middleware like this (protect/auth for admin check)
 // If not, add a basic one below or in a separate middleware file
-const protect = require('../middlewares/auth'); //
+const { protect } = require('../middlewares/auth'); //
 
 
 // GET /api/consultations - Get all consultations (admin only)
