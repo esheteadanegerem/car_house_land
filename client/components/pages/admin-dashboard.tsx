@@ -133,6 +133,9 @@ export function AdminDashboard() {
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<any>(null)
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
+  // FIXED: Reschedule consultation handler with proper state management
+const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
+const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
 
 
   const [owners, setOwners] = useState([])
@@ -436,7 +439,7 @@ export function AdminDashboard() {
           }
         }
       } catch (error) {
-        console.error("[v0] Error with car API operation:", error)
+        console.error(" Error with car API operation:", error)
         // Fallback to local state operations
         if (itemData.id && getCurrentData().find((item: any) => item.id === itemData.id)) {
           updateCar(itemData.id, itemWithDefaults)
@@ -1306,9 +1309,7 @@ const handleCompleteConsult = async (consult: Consultation) => {
   }
 };
 
-// FIXED: Reschedule consultation handler with proper state management
-const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
-const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
+
 
 const handleOpenReschedule = (consult: Consultation) => {
   const id = getConsultationId(consult);
