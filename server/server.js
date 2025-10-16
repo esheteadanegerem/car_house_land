@@ -21,7 +21,7 @@ app.set("trust proxy", 1);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
-app.use('/api/analytics', AnalyticsRoutes);
+
 
 app.use(cors());
 
@@ -39,6 +39,7 @@ app.use('/api/users', UserRoutes);
 app.use('/api/deals', DealRoutes);
 app.use('/api/properties', PropertyRoute);
 app.use('/api/consultations', ConsultationRoutes);
+app.use('/api/analytics', AnalyticsRoutes);
 
 app.post('/api/auth/refresh-token', async (req, res) => {
   try {
