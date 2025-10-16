@@ -13,7 +13,7 @@ const UserRoutes = require("./routes/userRoute");
 const DealRoutes = require("./routes/dealRoute");
 const PropertyRoute = require("./routes/propertyRoute");
 const ConsultationRoutes = require("./routes/consultationRoute");
-const AnalyticsRoutes = require("./routes/analytics");
+const AnalyticsRoutes = require("./routes/analyticsRoute");
 const app = express();
 app.set("trust proxy", 1);
 
