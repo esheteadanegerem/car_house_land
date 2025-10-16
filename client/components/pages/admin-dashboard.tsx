@@ -76,6 +76,7 @@ import { authService } from "@/lib/auth"
 
 import { useState, useEffect } from "react"
 import RecentActivities from "./RecentActivities"
+import { analyticsAPI } from "@/lib/api/analytics";
 
 export function AdminDashboard() {
   const {
@@ -142,7 +143,49 @@ const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
 
   const [owners, setOwners] = useState([])
   const [isLoadingOwners, setIsLoadingOwners] = useState(false)
+
+
+  const [analyticsData, setAnalyticsData] = useState({
+  userGrowth: [],
+  dealCompletion: [],
+  dailyTraffic: [],
+});
+const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+const [analyticsError, setAnalyticsError] = useState(null);
   // NEW: Fetch consultations when tab changes
+
+  // Add this useEffect to fetch analytics data
+useEffect(() => {
+  const fetchAnalyticsData = async () => {
+    if (activeTab === "analytics") {
+      setIsLoadingAnalytics(true);
+      setAnalyticsError(null);
+      
+      try {
+        const [userGrowth, dealCompletion, dailyTraffic] = await Promise.all([
+          analyticsAPI.getUserGrowth(),
+          analyticsAPI.getDealCompletion(),
+          analyticsAPI.getDailyTraffic(),
+        ]);
+
+        setAnalyticsData({
+          userGrowth,
+          dealCompletion,
+          dailyTraffic,
+        });
+      } catch (error) {
+        console.error("Error fetching analytics data:", error);
+        setAnalyticsError("Failed to load analytics data");
+      } finally {
+        setIsLoadingAnalytics(false);
+      }
+    }
+  };
+
+  fetchAnalyticsData();
+}, [activeTab]);
+
+
   // Add this useEffect for auto-refresh
 useEffect(() => {
   const loadInitialData = async () => {
@@ -1413,15 +1456,27 @@ const handleCancelConsult = async (consult: Consultation) => {
 const handleRefreshAll = async () => {
   try {
     setIsLoadingUsers(true);
+    setIsLoadingAnalytics(true);
+    
     await Promise.all([
       fetchConsultations(),
-      // You can add other refresh functions here
-      new Promise(resolve => setTimeout(resolve, 1000)) // Simulate loading
+      // Refresh analytics when on analytics tab
+      activeTab === "analytics" && analyticsAPI.getUserGrowth().then(data => 
+        setAnalyticsData(prev => ({ ...prev, userGrowth: data }))
+      ),
+      activeTab === "analytics" && analyticsAPI.getDealCompletion().then(data => 
+        setAnalyticsData(prev => ({ ...prev, dealCompletion: data }))
+      ),
+      activeTab === "analytics" && analyticsAPI.getDailyTraffic().then(data => 
+        setAnalyticsData(prev => ({ ...prev, dailyTraffic: data }))
+      ),
+      new Promise(resolve => setTimeout(resolve, 1000))
     ]);
   } catch (error) {
     console.error("Error refreshing data:", error);
   } finally {
     setIsLoadingUsers(false);
+    setIsLoadingAnalytics(false);
   }
 };
 
@@ -1685,132 +1740,243 @@ const handleRefreshAll = async () => {
   </div>
 </TabsContent>
 
-          <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-             <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <Globe className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
-                    Daily Traffic
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    Visitors and page views throughout the day
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      visitors: {
-                        label: "Visitors",
-                        color: "var(--color-brand-orange)",
-                      },
-                      pageViews: {
-                        label: "Page Views",
-                        color: "var(--color-brand-blue)",
-                      },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={trafficData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" />
-                        <YAxis />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Count"]}
-                            />
-                          }
-                        />
-                        <Line type="monotone" dataKey="visitors" stroke="var(--color-brand-orange)" strokeWidth={3} />
-                        <Line type="monotone" dataKey="pageViews" stroke="var(--color-brand-blue)" strokeWidth={3} />
-                        <Legend />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
+  {isLoadingAnalytics ? (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-gray-400" />
+        <p className="text-sm text-gray-500">Loading analytics data...</p>
+      </div>
+    </div>
+  ) : analyticsError ? (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
+        <p className="text-sm text-red-500">{analyticsError}</p>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
+      </div>
+    </div>
+  ) : (
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Daily Traffic Chart - Updated with real data */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center text-sm sm:text-base">
+              <Globe className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
+              Daily Traffic
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Visitors and page views throughout the day
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                visitors: {
+                  label: "Visitors",
+                  color: "var(--color-brand-orange)",
+                },
+                pageViews: {
+                  label: "Page Views",
+                  color: "var(--color-brand-blue)",
+                },
+              }}
+              className="h-[200px] sm:h-[250px] md:h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={analyticsData.dailyTraffic}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="timeInterval" 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Count"]}
+                      />
+                    }
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="visitors" 
+                    stroke="var(--color-brand-orange)" 
+                    strokeWidth={3} 
+                    dot={{ r: 4 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="pageViews" 
+                    stroke="var(--color-brand-blue)" 
+                    strokeWidth={3} 
+                    dot={{ r: 4 }}
+                  />
+                  <Legend />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
-                    User Growth
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Monthly active users</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      users: {
-                        label: "Active Users",
-                        color: "var(--color-brand-purple)",
-                      },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
-                            />
-                          }
-                        />
-                        <Bar dataKey="users" fill="var(--color-brand-purple)" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+        {/* User Growth Chart - Updated with real data */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center text-sm sm:text-base">
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
+              User Growth
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Monthly new user registrations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                newUsers: {
+                  label: "New Users",
+                  color: "var(--color-brand-purple)",
+                },
+              }}
+              className="h-[200px] sm:h-[250px] md:h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analyticsData.userGrowth}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
+                      />
+                    }
+                  />
+                  <Bar 
+                    dataKey="newUsers" 
+                    fill="var(--color-brand-purple)" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-6">
+        {/* Deal Completion Chart - Updated with real data */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center text-sm sm:text-base">
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
+              Deal Completion Rate
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Monthly completed deals
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                completedDeals: {
+                  label: "Completed Deals",
+                  color: "#10b981",
+                },
+              }}
+              className="h-[200px] sm:h-[250px] md:h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analyticsData.dealCompletion}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Deals"]}
+                      />
+                    }
+                  />
+                  <Bar 
+                    dataKey="completedDeals" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Analytics Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Users This Month</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {analyticsData.userGrowth.length > 0 
+                    ? analyticsData.userGrowth[analyticsData.userGrowth.length - 1]?.newUsers || 0
+                    : 0
+                  }
+                </p>
+              </div>
+              <Users className="w-8 h-8 text-brand-purple" />
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-6">
-             
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
-                    Deal Completion Rate
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Monthly deal success metrics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      deals: {
-                        label: "Completed Deals",
-                        color: "#10b981",
-                      },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Deals"]}
-                            />
-                          }
-                        />
-                        <Bar dataKey="deals" fill="#10b981" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Completed Deals This Month</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {analyticsData.dealCompletion.length > 0 
+                    ? analyticsData.dealCompletion[analyticsData.dealCompletion.length - 1]?.completedDeals || 0
+                    : 0
+                  }
+                </p>
+              </div>
+              <ShoppingCart className="w-8 h-8 text-emerald-600" />
             </div>
-          </TabsContent>
+          </CardContent>
+        </Card>
 
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Visitors</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {analyticsData.dailyTraffic.reduce((sum, item) => sum + (item.visitors || 0), 0)}
+                </p>
+              </div>
+              <Globe className="w-8 h-8 text-brand-orange" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  )}
+</TabsContent>
 
 
           <TabsContent value="listings" className="space-y-4 sm:space-y-6">
