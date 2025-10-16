@@ -1687,95 +1687,7 @@ const handleRefreshAll = async () => {
 
           <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
-                    Revenue Trends
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Monthly revenue growth</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      revenue: {
-                        label: "Revenue",
-                        color: "var(--color-brand-blue)",
-                      },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={revenueData}>
-                        <defs>
-                          <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-brand-blue)" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="var(--color-brand-blue)" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => [`$${Number(value).toLocaleString()}`, name || "Revenue"]}
-                            />
-                          }
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="revenue"
-                          stroke="var(--color-brand-blue)"
-                          strokeWidth={3}
-                          fill="url(#revenueGradient)"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
-                    User Growth
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Monthly active users</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      users: {
-                        label: "Active Users",
-                        color: "var(--color-brand-purple)",
-                      },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
-                            />
-                          }
-                        />
-                        <Bar dataKey="users" fill="var(--color-brand-purple)" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <Card>
+             <Card>
                 <CardHeader className="pb-2 sm:pb-4">
                   <CardTitle className="flex items-center text-sm sm:text-base">
                     <Globe className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
@@ -1820,6 +1732,46 @@ const handleRefreshAll = async () => {
                 </CardContent>
               </Card>
 
+              <Card>
+                <CardHeader className="pb-2 sm:pb-4">
+                  <CardTitle className="flex items-center text-sm sm:text-base">
+                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
+                    User Growth
+                  </CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Monthly active users</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={{
+                      users: {
+                        label: "Active Users",
+                        color: "var(--color-brand-purple)",
+                      },
+                    }}
+                    className="h-[200px] sm:h-[250px] md:h-[300px]"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={revenueData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
+                            />
+                          }
+                        />
+                        <Bar dataKey="users" fill="var(--color-brand-purple)" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-6">
+             
               <Card>
                 <CardHeader className="pb-2 sm:pb-4">
                   <CardTitle className="flex items-center text-sm sm:text-base">
