@@ -1,3 +1,4 @@
+
 const express = require('express');
 const {
   register,
@@ -33,6 +34,8 @@ const router = express.Router();
 router.post('/register', registerValidation, validateRequest, register);
 router.post('/login', authLimiter, loginValidation, validateRequest, login); // Added loginValidation
 router.post('/forgot-password', authLimiter, forgotPasswordValidation, validateRequest, sensitiveOperationLimit, forgotPassword);
+// POST route for reset password with email/code (matches controller implementation)
+router.post('/reset-password', authLimiter, validateRequest, resetPassword);
 router.put('/reset-password/:token', authLimiter, resetPasswordValidation, validateRequest, resetPassword);
 //router.post('/refresh-token', refreshTokenValidation, validateRequest, refreshToken);
 
