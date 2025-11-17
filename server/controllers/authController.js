@@ -185,7 +185,7 @@ const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 60 * 60 * 1000, // 7 days
     });
 
     // Set access token in cookie (to support req.cookies.token in middleware)
@@ -193,7 +193,7 @@ const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 15 minutes, matching access token expiry
+      maxAge: 7 *60 * 60 * 1000, // 15 minutes, matching access token expiry
     });
 
     // Prepare user data (exclude password)
@@ -217,7 +217,7 @@ const login = async (req, res) => {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // Match accessToken expiry
+      maxAge: 7 * 60 * 60 * 1000, // Match accessToken expiry
     });
 
     res.status(200).json({
