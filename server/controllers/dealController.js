@@ -310,6 +310,36 @@ const getDealStats = async (req, res) => {
   }
 };
 
+const getRecentCompletedDeals = async (req, res) => {
+  try {
+    const { sortBy = 'completedAt', sortOrder = 'desc', limit } = req.query;
+
+    const filter = { status: 'completed' };
+
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    let query = Deal.find(filter).sort(sort).populate('item');
+    
+    if (limit) {
+      query = query.limit(parseInt(limit));
+    }
+
+    const deals = await query;
+
+    res.status(200).json({
+      status: 'success',
+      data: { deals },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch completed deals',
+    });
+  }
+};
+
 module.exports = {
   getDeals,
   getDealById,
@@ -317,4 +347,5 @@ module.exports = {
   updateDealStatus,
   deleteDeal,
   getDealStats,
+  getRecentCompletedDeals,
 };

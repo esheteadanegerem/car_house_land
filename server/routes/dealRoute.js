@@ -1,10 +1,13 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
-const { getDeals, getDealById, createDeal, updateDealStatus, deleteDeal, getDealStats } = require('../controllers/dealController');
+const { getDeals, getDealById, createDeal, updateDealStatus, deleteDeal, getDealStats, getRecentCompletedDeals } = require('../controllers/dealController');
 const { protect, adminOnly } = require('../middlewares/auth');
 const { validateRequest } = require('../middlewares/validation');
 
 const router = express.Router();
+
+// Public route - must be before router.use(protect)
+router.get('/recent', getRecentCompletedDeals);
 
 router.use(protect);
  
