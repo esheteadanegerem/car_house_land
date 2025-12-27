@@ -27,7 +27,7 @@ const handleMulterError = (err, req, res, next) => {
   }
   next();
 };
- 
+
 
 // Validation rules
 // const createLandValidation = [
@@ -69,15 +69,14 @@ router.post(
   toggleFavorite
 );
 
-// User routes (authenticated users can create)
+// Admin only routes
 router.post(
   '/',
+
   upload.array('images', 3),
   handleMulterError,
   createLand
 );
-
-// Admin only routes
 
 router.put(
   '/:id',
