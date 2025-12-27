@@ -319,8 +319,12 @@ const getRecentCompletedDeals = async (req, res) => {
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    let query = Deal.find(filter).sort(sort).populate('item');
-    
+    let query = Deal.find(filter)
+      .sort(sort)
+      .populate('item')
+      .populate('buyer', 'fullName ') 
+      .populate('seller', 'fullName '); 
+
     if (limit) {
       query = query.limit(parseInt(limit));
     }
