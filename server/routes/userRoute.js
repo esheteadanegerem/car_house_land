@@ -8,7 +8,8 @@ const {
   toggleUserStatus,
   getUserStats,
   getUserDashboard,
-  toggleUserRole
+  toggleUserRole,
+  getPublicUserCount
 } = require('../controllers/userController');
 const { protect, adminOnly } = require('../middlewares/auth');
 const { validateRequest } = require('../middlewares/validation');
@@ -36,6 +37,8 @@ router.get('/owner/list', async (req, res) => {
   }
 });
 
+// Get public user count
+router.get('/public/user/count', getPublicUserCount);
 // All routes require authentication
 router.use(protect);
 
