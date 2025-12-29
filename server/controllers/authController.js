@@ -185,7 +185,7 @@ const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     // Set access token in cookie (to support req.cookies.token in middleware)
@@ -193,7 +193,7 @@ const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 *60 * 60 * 1000, // 15 minutes, matching access token expiry
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 15 minutes, matching access token expiry
     });
 
     // Prepare user data (exclude password)
@@ -217,7 +217,7 @@ const login = async (req, res) => {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 60 * 60 * 1000, // Match accessToken expiry
+      maxAge: 15 * 60 * 1000, // Match accessToken expiry
     });
 
     res.status(200).json({
@@ -363,7 +363,7 @@ const forgotPassword = async (req, res) => {
     user.resetCodeExpire = Date.now() + 10 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
 
-    const resetEmail = emailTemplates.passwordReset(resetCode);
+    const resetEmail = emailTemplates.passwordReset(user.fullName, resetCode);
     await sendEmail({ email: user.email, ...resetEmail });
 
     res.status(200).json({
@@ -489,7 +489,7 @@ const resetPassword = async (req, res) => {
 const refreshToken = async (req, res) => {
   try {
     const incoming = req.cookies.refreshToken || req.body.refreshToken;
-    
+
     if (!incoming) {
       return res.status(400).json({
         status: 'error',
@@ -593,7 +593,7 @@ const requestEmailVerification = async (req, res) => {
     user.verificationCodeExpire = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    const emailContent = emailTemplates.verificationCode(verificationCode);
+    const emailContent = emailTemplates.verificationCode(user.fullName, verificationCode);
     await sendEmail({ email: user.email, ...emailContent });
 
     res.status(200).json({ status: 'success', message: 'Verification code sent to your email' });
