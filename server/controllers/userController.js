@@ -48,6 +48,26 @@ const getUsers = async (req, res) => {
     });
   }
 };
+// Get public user count 
+const getPublicUserCount = async (req, res) => {
+  try {
+    const activeUsers = await User.countDocuments({ isActive: true });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        activeUsers
+      }
+    });
+  } catch (error) {
+    console.error('Get public user count error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch user count'
+    });
+  }
+};
+
 
 // Get a single user by ID
 const getUserById = async (req, res) => {
@@ -392,4 +412,5 @@ module.exports = {
   getUserStats,
   getUserDashboard,
   toggleUserRole,
+  getPublicUserCount,
 };
