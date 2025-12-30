@@ -99,14 +99,17 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    const user = await User.findById(id);
+    const user = await User.findById(id).select('+password');
 
     if (!user) {
+      console.log(`[updateUser] User not found: ${id}`);
       return res.status(404).json({
         status: 'error',
         message: 'User not found',
       });
     }
+
+    console.log(`[updateUser] Found user ${user.email}. Updates received:`, Object.keys(updates));
 
     // List of allowed fields for admin update
     const allowedUpdates = [
@@ -128,7 +131,11 @@ const updateUser = async (req, res) => {
           user.address = { ...user.address, ...updates.address };
         } else if (field === 'password') {
           if (updates.password && updates.password.trim().length >= 6) {
+            console.log(`[updateUser] Setting new password for user ${id}`);
             user.password = updates.password;
+            user.markModified('password');
+          } else if (updates.password) {
+            console.log(`[updateUser] Password update rejected: too short or empty`);
           }
         } else {
           user[field] = updates[field];
@@ -437,4 +444,4 @@ module.exports = {
   getUserDashboard,
   toggleUserRole,
   getPublicUserCount,
-};
+};          
