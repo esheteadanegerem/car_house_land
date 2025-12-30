@@ -12,7 +12,8 @@ const {
   getPublicUserCount
 } = require('../controllers/userController');
 const { protect, adminOnly } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/requestValidator');
+const { validateRequest } = require('../middlewares/validatorMiddleware');
+
 const User = require('../models/User.js')
 const router = express.Router();
 
