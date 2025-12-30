@@ -17,8 +17,7 @@ const getUsers = async (req, res) => {
     if (search) {
       const searchRegex = new RegExp(sanitizeSearchString(search), 'i');
       filter.$or = [
-        { firstName: searchRegex },
-        { lastName: searchRegex },
+        { fullName: searchRegex },
         { email: searchRegex },
         { phone: searchRegex },
       ];
@@ -48,26 +47,6 @@ const getUsers = async (req, res) => {
     });
   }
 };
-// Get public user count 
-const getPublicUserCount = async (req, res) => {
-  try {
-    const activeUsers = await User.countDocuments({ isActive: true });
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        activeUsers
-      }
-    });
-  } catch (error) {
-    console.error('Get public user count error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch user count'
-    });
-  }
-};
-
 
 // Get a single user by ID
 const getUserById = async (req, res) => {
@@ -120,16 +99,7 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // Prevent updating sensitive fields
-    delete updates.password;
-    delete updates.email;
-    delete updates.resetPasswordToken;
-    delete updates.resetPasswordExpire;
-
-    const user = await User.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    }).select('-password');
+    const user = await User.findById(id);
 
     if (!user) {
       return res.status(404).json({
@@ -138,16 +108,50 @@ const updateUser = async (req, res) => {
       });
     }
 
+    // List of allowed fields for admin update
+    const allowedUpdates = [
+      'fullName',
+      'password',
+      'phone',
+      'role',
+      'avatar',
+      'address',
+      'isActive',
+      'isVerified',
+    ];
+
+    // Apply updates
+    allowedUpdates.forEach((field) => {
+      if (updates[field] !== undefined) {
+        // Handle nested address object
+        if (field === 'address' && typeof updates.address === 'object') {
+          user.address = { ...user.address, ...updates.address };
+        } else if (field === 'password') {
+          if (updates.password && updates.password.trim().length >= 6) {
+            user.password = updates.password;
+          }
+        } else {
+          user[field] = updates[field];
+        }
+      }
+    });
+
+    await user.save();
+
+    const updatedUser = user.toObject();
+    delete updatedUser.password;
+
     res.status(200).json({
       status: 'success',
       message: 'User updated successfully',
-      data: { user },
+      data: { user: updatedUser },
     });
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to update user',
+      detail: error.message
     });
   }
 };
@@ -271,10 +275,10 @@ const getUserStats = async (req, res) => {
           _id: null,
           totalUsers: { $sum: 1 },
           activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } },
-           
+
           adminUsers: { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
           ownerUsers: { $sum: { $cond: [{ $eq: ['$role', 'owner'] }, 1, 0] } },
-          
+
         },
       },
     ]);
@@ -317,6 +321,26 @@ const getUserStats = async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch user statistics',
+    });
+  }
+};
+
+// Get public user count 
+const getPublicUserCount = async (req, res) => {
+  try {
+    const activeUsers = await User.countDocuments({ isActive: true });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        activeUsers
+      }
+    });
+  } catch (error) {
+    console.error('Get public user count error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch user count'
     });
   }
 };
