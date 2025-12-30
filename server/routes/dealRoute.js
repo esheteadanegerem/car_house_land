@@ -2,7 +2,8 @@ const express = require('express');
 const { body, param, query } = require('express-validator');
 const { getDeals, getDealById, createDeal, updateDealStatus, deleteDeal, getDealStats, getRecentCompletedDeals } = require('../controllers/dealController');
 const { protect, adminOnly } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/requestValidator');
+const { validateRequest } = require('../middlewares/validatorMiddleware');
+
 
 const router = express.Router();
 
