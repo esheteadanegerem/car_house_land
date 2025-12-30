@@ -14,7 +14,7 @@ const {
 } = require('../controllers/authController');
 
 const { protect, sensitiveOperationLimit } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/validation');
+const { validateRequest } = require('../middlewares/requestValidator');
 const { authLimiter } = require('../middlewares/rateLimiter');
 
 const {
@@ -28,15 +28,6 @@ const {
 } = require('../utils/validation');
 
 const router = express.Router();
-
-// Debugging imports for deployment issue
-console.log('[DEBUG] authRoute.js imports check:');
-console.log('register type:', typeof register);
-console.log('validateRequest type:', typeof validateRequest);
-console.log('registerValidation type:', typeof registerValidation, Array.isArray(registerValidation));
-if (Array.isArray(registerValidation)) {
-  console.log('registerValidation content types:', registerValidation.map(v => typeof v));
-}
 
 // Public routes
 router.post('/register', registerValidation, validateRequest, register);

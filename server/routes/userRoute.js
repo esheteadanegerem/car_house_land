@@ -12,8 +12,8 @@ const {
   getPublicUserCount
 } = require('../controllers/userController');
 const { protect, adminOnly } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/validation');
-const User=require('../models/User.js')
+const { validateRequest } = require('../middlewares/requestValidator');
+const User = require('../models/User.js')
 const router = express.Router();
 
 
@@ -46,9 +46,9 @@ router.use(protect);
 const userIdParam = [
   param('id').isMongoId().withMessage('Invalid user ID'),
 ];
- 
 
- 
+
+
 
 // Routes
 router.get('/dashboard', getUserDashboard);
