@@ -62,6 +62,7 @@ const registerConsultant = async (req, res) => {
       documents = req.files.map((file, index) => ({
         type: req.body.documentTypes ? JSON.parse(req.body.documentTypes)[index] : 'other',
         title: req.body.documentTitles ? JSON.parse(req.body.documentTitles)[index] : `Document ${index + 1}`,
+        originalName: file.originalname || null,
         url: file.path,
         publicId: file.filename,
         verified: false,
