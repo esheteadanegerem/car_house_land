@@ -73,6 +73,11 @@ const consultantSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    // Original filename (keeps extension like .pdf/.docx) to support correct downloads
+    originalName: {
+      type: String,
+      default: null
+    },
     url: {
       type: String,
       required: true
